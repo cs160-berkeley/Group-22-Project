@@ -25,77 +25,53 @@ var blackBorderedSkin = new Skin({
     borders: {left: 2, right: 2, top: 2, bottom: 2}, 
     stroke: "black"
 });
+//updated skins below:
+let darkBlue = new Skin({fill: '#205DAB'});
+let mediumBlue = new Skin({fill: '#4679BD'});
+let lightBlue = new Skin({fill: '#77A9DA'});
+let darkYellow = new Skin({fill: '#FDB737'});
+let lightYellow = new Skin({fill: '#FFD385'});
 
 //added a green & red style and changed their sizes! -Stacy
-var blackHeadingStyle = new Style ({ font: '38px Avenir-Heavy', color: 'black', horizontal: 'center'});
+var blackHeadingStyle = new Style ({ font: '32px Avenir-Heavy', color: 'black', horizontal: 'center'});
 var boldBlackBodyStyle = new Style ({ font: 'bold 20px Avenir-Roman', color: 'black', horizontal: 'center'});
-var blackBodyStyle = new Style ({ font: '20px Avenir-Roman', color: 'black', horizontal: 'center'});
-var whiteHeadingStyle = new Style ({ font: '38px Avenir-Heavy', color: 'white', horizontal: 'center'});
+var blackBodyStyle = new Style ({ font: '20px Avenir-Roman', color: 'black', horizontal: 'left'});
+var whiteHeadingStyle = new Style ({ font: '32px Avenir-Heavy', color: 'white', horizontal: 'center'});
 var whiteBodyStyle = new Style ({ font: '20px Avenir-Roman', color: 'white', horizontal: 'center'});
 var whiteSmallStyle = new Style ({ font: '18px Avenir-Roman', color: 'white', horizontal: 'center'});
-var greenBodyStyle = new Style ({ font: 'bold 20px Avenir-Roman', color: '#5AA700', horizontal: 'center'});
-var redBodyStyle = new Style ({ font: 'bold 20px Avenir-Roman', color: '#E71D32', horizontal: 'center'});
+var blueTitleStyle = new Style ({ font: 'bold 20px Avenir-Roman', color: '#205DAB', horizontal: 'left'});
+var blueBodyStyle = new Style ({ font: 'bold 18px Avenir-Roman', color: '#205DAB', horizontal: 'center'});
 
 /* Data Objects */
-let completedpills = "Sertraline, Vitamin A";
-let incompletepills = "none";
 var refilled = false;
 /*  Templates */
 
 //Home Screen
-let completedlist = new Column({
-	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
-	contents: [
-	new Label({ string: completedpills, style: blackBodyStyle })
-	]
-	});
-let incompletelist = new Column({
-	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
-	contents: [
-	new Label({ string: incompletepills, style: blackBodyStyle })
-	]
-	});
 let homeScreen = Column.template($ => ({
 	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
 	contents: [
 		new Line({
+			top: 0, left: 0, right: 0, bottom: 0, height: 20, skin: darkBlue,
+			contents: [
+				//menu icon,
+				new Label({ top: 10, left: 0, right: 100, bottom: 10, string: "Lemonaid", style: whiteSmallStyle }),
+			], 
+		}),
+		//calendar picture,
+		new Line({
 			top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
 			contents: [
-			new Label({ left: 50, string: "<", style: blackBodyStyle }),
+			//left arrow,
 			new Column({ top: 50, left: 0, right: 0, bottom: 0, skin: whiteSkin,
 				contents: [
-				new Label({ string: 'Today', style: blackHeadingStyle }),
-				new Label({ string: 'Fri., October 4, 2016', style: blackBodyStyle }),
+				new Label({ string: '4 October 2016', style: blackHeadingStyle }),
 				], 
 			}),
-			new Label({ right: 50, string: ">", style: blackBodyStyle }),
+			//right arrow,
 			],
 		}),
-		new Label({ name: 'completed', top: 20, string: 'Completed', style: greenBodyStyle }),
-		new Column({
-			top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
-			contents: [
-			new Label({ string: completedpills, style: blackBodyStyle })
-			]
-			}),
-		new Label({ name: 'incomplete', string: 'Incomplete', style: redBodyStyle }),
-		new Column({
-			top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
-			contents: [
-			new Label({ string: incompletepills, style: blackBodyStyle })
-			]
-			}),
-		new button({ name: 'myMedicineButton', top: 120, left: 60, right: 60, bottom: 5,
-			skin: graySkin, 
-				content: new Label({ string: "MY MEDICINE", style: whiteBodyStyle }),
-				onTouchBegan: function(container) {container.skin = blackBorderedSkin; container.first.style = blackBodyStyle},
-				nextScreen: myMedicineScreen,		
-		}),
-		//Traveling Button not finished yet!
-		new button({ name: 'travelingButton', top: 5, left: 60, right: 60, bottom: 20,
-			skin: graySkin, 
-			content: new Label({ string: "I'M TRAVELING", style: whiteBodyStyle }),	
-		}),
+		incompletelist,
+		completedlist,
 	],
 }));
 
@@ -103,19 +79,38 @@ let homeScreen = Column.template($ => ({
 let myMedicineScreen = Column.template($ => ({
 	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
 	contents: [
-	new button({ name: 'medicine-back-button', top: 5, left: 5, 
-			skin: whiteSkin, 
-			content: new Label({ string: "←", style: blackBodyStyle}),	
-			nextScreen: homeScreen,
+	new Line({
+		top: 0, left: 0, right: 0, bottom: 0, height: 20, skin: darkBlue,
+		contents: [
+			//menu icon,
+			new Label({ top: 10, left: 0, right: 100, bottom: 10, string: "My Medicine", style: whiteSmallStyle }),
+		], 
+	}),
+	//medicine picture,
+	new Label({ left: 25, name: 'my medicines', top: 20, string: 'MY MEDICINES', style: blueTitleStyle }),
+	new button({ name: 'sertraline', top: 5, left: 25, right: 25, bottom: 5, 
+			skin: blackBorderedSkin, 
+			content: new Label({ string: "Sertraline", style: blackBodyStyle}),	
+			nextScreen: individualMedicineScreen,
 		}),
-	new Label({ string: 'My Medicines', style: blackHeadingStyle, top: 25}),
-	new addMedicineButton(),
-
+	new button({ name: 'vitamin a', top: 5, left: 25, right: 25, bottom: 5, 
+			skin: blackBorderedSkin, 
+			content: new Label({ string: "Vitamin A", style: blackBodyStyle}),	
+			nextScreen: individualMedicineScreen,
+		}),
+	new button({ name: 'levofloxacin', top: 5, left: 25, right: 25, bottom: 5,
+			skin: blackBorderedSkin, 
+			content: new Label({ string: "Levofloxacin", style: blackBodyStyle}),	
+			nextScreen: individualMedicineScreen,
+		}),
+	//change this below to be the "add new medicine" picture
+	new Picture({height: 100, left: 100, right: 0, url: "assets/pillphoto.png"}),
 	],
 	active: true,
 	Behavior: class extends Behavior{
 		onDisplayed(container) {
-			trace('~~~~ LAUNCHED! ~~~~~ \n')
+			trace('~~~~ LAUNCHED! ~~~~~ \n');
+			/*
 			var medicines = completedpills.split(/[,]+/);
 			for (var i = 0; i < medicines.length; i++) { 
 				trace(medicines[i] + '\n');
@@ -129,26 +124,71 @@ let myMedicineScreen = Column.template($ => ({
 				trace('Added ' + medicines[i] + '\n');
 				trace(container.first.name + '\n');
 			}
+			*/
 		}
 	}
 }));
 
-let addMedicineButton = Container.template($ => ({
-	height: 40, right: 25, left: 25, top: 10, skin: blackBorderedSkin,
-	contents: [new Label({string: "+ ADD MEDICINE", style: blackBodyStyle})],
+//Traveling Screen
+let numberLabel = new Label({ name: "numberLabel", string: 1, style: blackHeadingStyle, })
+let numberContainer = new Container({ top: 20, left: 0, right: 0, bottom: 20, skin: blackBorderedSkin, 
+	contents: [ numberLabel ]
+});
+let numberEntryLine = new Line({
+	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
+	contents: [
+		new Container({ top: 0, left: 0, right: 0, bottom: 0, name: "-", 
+			contents: [new Label({ string: " - ", style: blackHeadingStyle, })],
+			active: true,
+			behavior: Behavior({
+				onTouchEnded: function(container){
+					numberLabel.string -= 1; 
+					trace(numberLabel.string + "\n");
+					},
+					
+			}),
+		}),
+		numberContainer,
+		new Container({ top: 0, left: 0, right: 0, bottom: 0, name: "+", 
+			contents: [new Label({ string: " + ", style: blackHeadingStyle, })],
+			active: true,
+			behavior: Behavior({
+				onTouchEnded: function(container){
+					numberLabel.string += 1; 
+					trace(numberLabel.string + "\n");
+					},
+					
+			}),
+		}),
+	],
+});
+let travelingScreen = Column.template($ => ({
+	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
+	contents: [
+	new Line({
+		top: 0, left: 0, right: 0, bottom: 0, height: 20, skin: darkBlue,
+		contents: [
+			//menu icon,
+			new Label({ top: 10, left: 0, right: 100, bottom: 10, string: "Travelling", style: whiteSmallStyle }),
+		], 
+	}),
+	//traveling picture,
+	new Text({ width: 250, top: 20, string: "You can dispense more than a day's worth of pills if you're traveling.", style: boldBlackBodyStyle }),
+	new Label({ left: 25, right: 25, top: 20, string: "HOW MANY DAYS ARE YOU TRAVELING?", style: blueBodyStyle }),
+	numberEntryLine,
+	new button({ name: 'dispense', top: 5, left: 50, right: 50, bottom: 20,
+			skin: darkBlue, 
+			content: new Label({ string: "DISPENSE", style: whiteBodyStyle}),	
+			//nextScreen: dispenseLightbox,
+		}),
+	],
 	active: true,
 	Behavior: class extends Behavior{
-		onTouchBegan(container){
-			container.skin = graySkin;
-			container.first.style = whiteBodyStyle;
-		}
-		onTouchEnded(container) {
-			container.skin = blackBorderedSkin;
-			container.first.style = blackBodyStyle;
+		onDisplayed(container) {
+			trace('~~~~ LAUNCHED! ~~~~~ \n');
 		}
 	}
 }));
-
 
 //Individual Medicine Screen
 let pillDetails = new Column({
@@ -158,7 +198,7 @@ let pillDetails = new Column({
 		new Picture({height: 100, url: "assets/pillphoto.png"}),
 		new Label({ string: "Sertraline", style: blackHeadingStyle}),
 		new Label({ string: "100mg, once daily", style: blackBodyStyle}),
-		new Label({ string: "6% REMAINING", style: redBodyStyle}),
+		new Label({ string: "6% REMAINING", style: blueBodyStyle}),
 		], 
 	});
 let individualMedicineScreen = Column.template($ => ({
@@ -293,6 +333,46 @@ let xButton = Container.template($ => ({
 	}
 }));
 
+let completedlist = new Column({
+	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
+	contents: [
+	new Label({ top: 25, left: 25, name: 'complete', string: 'COMPLETE', style: blueTitleStyle }),
+	new Container({ name: 'vitamin a', top: 5, left: 25, 
+		skin: whiteSkin, 
+		contents:
+		//filled-in circle icon,  
+		new Label({ string: "Vitamin A", style: blackBodyStyle}),	
+	}),
+	new Container({ name: 'vitamin c', top: 5, left: 25, 
+		skin: whiteSkin, 
+		contents:
+		//filled-in circle icon,  
+		new Label({ string: "Vitamin C", style: blackBodyStyle}),	
+	}), 
+	]
+});
+
+let incompletelist = new Column({
+	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
+	contents: [
+	new Label({ left: 25, name: 'incomplete', top: 20, string: 'INCOMPLETE', style: blueTitleStyle }),
+
+	new button({ name: 'sertraline', top: 5, left: 25, 
+		skin: whiteSkin, 
+		content:
+		//circle icon,  
+		new Label({ string: "Sertraline", style: blackBodyStyle}),	
+		//nextScreen: dispensingLightbox,
+	}),
+
+	new Container({ name: 'levofloxacin', top: 5, left: 25, 
+		skin: whiteSkin, 
+		contents:
+		//circle icon,  
+		new Label({ string: "Levofloxacin", style: blackBodyStyle}),	
+	}),
+	]
+});
 
 /* Main Container */
 var currentScreen;
