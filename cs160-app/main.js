@@ -15,7 +15,40 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
+/* VARS */
+var monthNames = [
+  "January", "February", "March",
+  "April", "May", "June", "July",
+  "August", "September", "October",
+  "November", "December"
+];
+var weekNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
+var myMedicines = {"Sertraline": {
+		"directions": "1 100mg pill per day",
+		"quantity": 10,
+		"daysOfWeek": ["saturday"],
+		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0)]
+	},
+	"Vitamin A": {
+		"directions": "1 tablet a day",
+		"quantity": 10,
+		"daysOfWeek": [],
+		"timesOfDay": []
+	},
+	"Vitamin C": {
+		"directions": "1 tablet a day",
+		"quantity": 10,
+		"daysOfWeek": [],
+		"timesOfDay": []
+	},
+	"Levofloxacin": {
+		"directions": "2 pills a day, one in the morning, one at night.",
+		"quantity": 10,
+		"daysOfWeek": [],
+		"timesOfDay": []
+	}}
+var currentMedicine = "";
 /* SKINS */
 let whiteSkin = new Skin({fill: 'white'});
 let graySkin = new Skin({fill: 'black'});
@@ -31,6 +64,10 @@ let mediumBlue = new Skin({fill: '#4679BD'});
 let lightBlue = new Skin({fill: '#77A9DA'});
 let darkYellow = new Skin({fill: '#FDB737'});
 let lightYellow = new Skin({fill: '#FFD385'});
+var darkBlueBorderedSkin = new Skin({
+    borders: {left: 2, right: 2, top: 2, bottom: 2}, 
+    stroke: '#205DAB'
+});
 
 //added a green & red style and changed their sizes! -Stacy
 var blackHeadingStyle = new Style ({ font: '32px Avenir-Heavy', color: 'black', horizontal: 'center'});
@@ -41,37 +78,42 @@ var whiteBodyStyle = new Style ({ font: '20px Avenir-Roman', color: 'white', hor
 var whiteSmallStyle = new Style ({ font: '18px Avenir-Roman', color: 'white', horizontal: 'center'});
 var blueTitleStyle = new Style ({ font: 'bold 20px Avenir-Roman', color: '#205DAB', horizontal: 'left'});
 var blueBodyStyle = new Style ({ font: 'bold 18px Avenir-Roman', color: '#205DAB', horizontal: 'center'});
-
+var navbarStyle = new Style({font: 'bold 18px Avenir-Roman', color: 'white', horizontal: 'left'});
+var redBodyStyle = new Style ({ font: '20px Avenir-Roman', color: 'red', horizontal: 'center'});
 /* Data Objects */
 var refilled = false;
 /*  Templates */
+function getDate() {
+	var date = new Date();
+	return date.getDate() + " " + monthNames[date.getMonth()] + " " + date.getFullYear();
+}
 
 //Home Screen
 let homeScreen = Column.template($ => ({
 	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
 	contents: [
 		new Line({
-			top: 0, left: 0, right: 0, bottom: 0, height: 20, skin: darkBlue,
+			top: 0, left: 0, right: 0, height: 50, skin: darkBlue,
 			contents: [
-				//menu icon,
-				new Label({ top: 10, left: 0, right: 100, bottom: 10, string: "Lemonaid", style: whiteSmallStyle }),
+				new Picture({width: 20, left: 15, url: "assets/menubar.png", active: true, behavior: new menuOpenBehavior()}),
+				new Label({ top: 10, left: 10, bottom: 10, string: "Lemonaid", style: whiteSmallStyle }),
 			], 
 		}),
-		//calendar picture,
+		new Picture({height: 100, top: 25, left: 0, right: 0, url: "assets/calendar.png"}),
 		new Line({
-			top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
+			top: 15, left: 0, right: 0, skin: whiteSkin,
 			contents: [
 			//left arrow,
-			new Column({ top: 50, left: 0, right: 0, bottom: 0, skin: whiteSkin,
+			new Column({ top: 0, left: 0, right: 0, skin: whiteSkin,
 				contents: [
-				new Label({ string: '4 October 2016', style: blackHeadingStyle }),
+				new Label({ string: getDate(), style: blackHeadingStyle }),
 				], 
 			}),
 			//right arrow,
 			],
 		}),
-		incompletelist,
-		completedlist,
+		new incompletelist(),
+		new completedlist(),
 	],
 }));
 
@@ -80,112 +122,93 @@ let myMedicineScreen = Column.template($ => ({
 	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
 	contents: [
 	new Line({
-		top: 0, left: 0, right: 0, bottom: 0, height: 20, skin: darkBlue,
+		top: 0, left: 0, right: 0, height: 50, skin: darkBlue,
 		contents: [
-			//menu icon,
-			new Label({ top: 10, left: 0, right: 100, bottom: 10, string: "My Medicine", style: whiteSmallStyle }),
+			new Picture({width: 20, left: 15, url: "assets/menubar.png", active: true, behavior: new menuOpenBehavior()}),
+			new Label({ top: 10, left: 15, bottom: 10, string: "My Medicine", style: whiteSmallStyle }),
 		], 
 	}),
-	//medicine picture,
+	new Picture({height: 100, top: 25, left: 0, right: 0, url: "assets/medicines.png"}),
 	new Label({ left: 25, name: 'my medicines', top: 20, string: 'MY MEDICINES', style: blueTitleStyle }),
-	new button({ name: 'sertraline', top: 5, left: 25, right: 25, bottom: 5, 
-			skin: blackBorderedSkin, 
-			content: new Label({ string: "Sertraline", style: blackBodyStyle}),	
-			nextScreen: individualMedicineScreen,
-		}),
-	new button({ name: 'vitamin a', top: 5, left: 25, right: 25, bottom: 5, 
-			skin: blackBorderedSkin, 
-			content: new Label({ string: "Vitamin A", style: blackBodyStyle}),	
-			nextScreen: individualMedicineScreen,
-		}),
-	new button({ name: 'levofloxacin', top: 5, left: 25, right: 25, bottom: 5,
-			skin: blackBorderedSkin, 
-			content: new Label({ string: "Levofloxacin", style: blackBodyStyle}),	
-			nextScreen: individualMedicineScreen,
-		}),
-	//change this below to be the "add new medicine" picture
-	new Picture({height: 100, left: 100, right: 0, url: "assets/pillphoto.png"}),
+	new Picture({name: "addMedicine", height: 50, right: 15, top: 50, url: "assets/plus.png"}),
 	],
 	active: true,
 	Behavior: class extends Behavior{
 		onDisplayed(container) {
 			trace('~~~~ LAUNCHED! ~~~~~ \n');
-			/*
-			var medicines = completedpills.split(/[,]+/);
-			for (var i = 0; i < medicines.length; i++) { 
-				trace(medicines[i] + '\n');
-			    container.insert(
-			    	new button({ name: medicines[i], left: 25, right: 25, top: 10, height: 40,
-					skin: graySkin, 
-						content: new Label({ string: medicines[i], style: whiteBodyStyle }),
-						onTouchBegan: function(container) {container.skin = blackBorderedSkin; container.first.style = blackBodyStyle},
-						nextScreen: individualMedicineScreen,		
+			for (var medicine in myMedicines) {
+				var data = myMedicines[medicine];
+				container.insert(
+					new medicineButton({ name: medicine, top: 10, left: 25, right: 25, height: 50, 
+					skin: blackBorderedSkin, 
+					content: new Label({ string: medicine, style: blackBodyStyle}),	
+					nextScreen: individualMedicineScreen,
 				}), container.last);
-				trace('Added ' + medicines[i] + '\n');
-				trace(container.first.name + '\n');
 			}
-			*/
 		}
 	}
 }));
 
 //Traveling Screen
-let numberLabel = new Label({ name: "numberLabel", string: 1, style: blackHeadingStyle, })
-let numberContainer = new Container({ top: 20, left: 0, right: 0, bottom: 20, skin: blackBorderedSkin, 
-	contents: [ numberLabel ]
-});
-let numberEntryLine = new Line({
-	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
+var travelling_days = 1;
+let numberLabel = new Label({ name: "numberLabel", string: travelling_days, style: blackHeadingStyle, })
+let numberContainer = Container.template($ => ({ height: 50, top: 20, left: 0, right: 0, skin: blackBorderedSkin, 
+	contents: [ new Label({ name: "numberLabel", string: travelling_days, style: blackHeadingStyle, }) ]
+}));
+let numberEntryLine = Line.template($ => ({
+	height: 50, top: 20, left: 0, right: 0, skin: whiteSkin,
 	contents: [
-		new Container({ top: 0, left: 0, right: 0, bottom: 0, name: "-", 
+		new Container({ height: 50, top: 20, left: 0, right: 0, name: "-", 
 			contents: [new Label({ string: " - ", style: blackHeadingStyle, })],
 			active: true,
 			behavior: Behavior({
 				onTouchEnded: function(container){
-					numberLabel.string -= 1; 
-					trace(numberLabel.string + "\n");
-					},
-					
+					if (travelling_days > 1) {
+						travelling_days -= 1;
+						container.next.first.string = travelling_days;
+					}
+				},	
 			}),
 		}),
-		numberContainer,
-		new Container({ top: 0, left: 0, right: 0, bottom: 0, name: "+", 
+		new numberContainer(),
+		new Container({ height: 50, top: 20, left: 0, right: 0, name: "+", 
 			contents: [new Label({ string: " + ", style: blackHeadingStyle, })],
 			active: true,
 			behavior: Behavior({
 				onTouchEnded: function(container){
-					numberLabel.string += 1; 
-					trace(numberLabel.string + "\n");
+					travelling_days += 1;
+					container.next.first.string = travelling_days; 
 					},
 					
 			}),
 		}),
 	],
-});
+}));
 let travelingScreen = Column.template($ => ({
 	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
 	contents: [
 	new Line({
-		top: 0, left: 0, right: 0, bottom: 0, height: 20, skin: darkBlue,
+		top: 0, left: 0, right: 0, height: 50, skin: darkBlue,
 		contents: [
-			//menu icon,
-			new Label({ top: 10, left: 0, right: 100, bottom: 10, string: "Travelling", style: whiteSmallStyle }),
+			new Picture({width: 20, left: 15, url: "assets/menubar.png", active: true, behavior: new menuOpenBehavior()}),
+			new Label({ top: 10, left: 15, bottom: 10, string: "Travelling", style: whiteSmallStyle }),
 		], 
 	}),
-	//traveling picture,
+	new Picture({height: 100, top: 25, left: 0, right: 0, url: "assets/traveling.png"}),
 	new Text({ width: 250, top: 20, string: "You can dispense more than a day's worth of pills if you're traveling.", style: boldBlackBodyStyle }),
 	new Label({ left: 25, right: 25, top: 20, string: "HOW MANY DAYS ARE YOU TRAVELING?", style: blueBodyStyle }),
-	numberEntryLine,
-	new button({ name: 'dispense', top: 5, left: 50, right: 50, bottom: 20,
+	new numberEntryLine(),
+	new button({ name: 'dispense', height: 50, top: 35, left: 50, right: 50, 
 			skin: darkBlue, 
 			content: new Label({ string: "DISPENSE", style: whiteBodyStyle}),	
-			//nextScreen: dispenseLightbox,
 		}),
 	],
 	active: true,
 	Behavior: class extends Behavior{
 		onDisplayed(container) {
 			trace('~~~~ LAUNCHED! ~~~~~ \n');
+			travelling_days = 1;
+			numberLabel.string = travelling_days;
 		}
 	}
 }));
@@ -201,33 +224,101 @@ let pillDetails = new Column({
 		new Label({ string: "6% REMAINING", style: blueBodyStyle}),
 		], 
 	});
+
+function formatTime(date) {
+	var minutes = date.getMinutes();
+	if (minutes < 10) {
+		minutes = "0" + minutes;
+	}
+	return date.getHours() + ":" + minutes;
+}
+function contains(obj, item) {
+    var i = obj.length;
+    while (i--) {
+        if (obj[i] == item) {
+            return true;
+        }
+    }
+    return false;
+}
+
 let individualMedicineScreen = Column.template($ => ({
 	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
 	contents: [
 		//editButton not finished yet!
 		new button({ name: 'medicine-back-button', top: 5, left: 5, 
 			skin: whiteSkin, 
-			content: new Label({ string: "←", style: blackBodyStyle}),	
+			content: new Picture({top: 15, height: 15, url: "assets/back_button.png"}),	
 			nextScreen: myMedicineScreen,
 		}),
-		new button({ name: 'editButton', top: -40, left: 280, right: 0, bottom: 0,
-			skin: whiteSkin, 
-			content: new Picture({ height: 15, url: "assets/editicon.png" }),	
+		new button({ name: 'editButton', top: -15, left: 270, right: 10, width: 100, height: 25,
+			skin: darkBlue, 
+			content: new Label({string: "EDIT", style: whiteBodyStyle}),	
 		}),
-		new Label({ string: "Medicine", style: blackHeadingStyle}),
 		new Column({
-			top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
+			top: 0, left: 0, right: 0, skin: whiteSkin,
 			contents: [
 			//this is hard-coded for now but we can change this later!
-			new Picture({height: 100, url: "assets/pillphoto.png"}),
-			new Label({ string: "Sertraline", style: blackHeadingStyle}),
-			new Label({ string: "100mg, once daily", style: blackBodyStyle}),
-			new Label({ string: "6% REMAINING", style: redBodyStyle}),
+			new Picture({top: 20, height: 100, url: "assets/sertraline.png"}),
+			new Label({ string: currentMedicine, style: blackHeadingStyle}),
+			new Label({bottom: 20, string: myMedicines[currentMedicine]["quantity"] + " remaining", style: blueBodyStyle}),
+			new Label({left: 15, top: 15, string: "DIRECTIONS", style: new Style({font: 'bold 18px Avenir-Roman', color: '#205DAB', horizontal: 'left'})}),
+			new Label({left: 15, top: 5, string: myMedicines[currentMedicine]["directions"], style: blackBodyStyle}),
+			new Label({left: 15, top: 15, string: "NOTIFICATIONS", style: new Style({font: 'bold 18px Avenir-Roman', color: '#205DAB', horizontal: 'left'})}),
+			new Column({top: 0, left: 0, right: 0, skin: whiteSkin,
+				contents: [], active: true,
+				behavior: Behavior({
+					onDisplayed: function(container) {
+						for (var time in myMedicines[currentMedicine]["timesOfDay"]) {
+							container.add(new Label({left: 15, top: 5, string: formatTime(myMedicines[currentMedicine]["timesOfDay"][time]), style: blackBodyStyle}))
+						}
+					}
+				})}),
+			new Line({top: 0, left: 10, right: 10, skin: whiteSkin,
+				contents: [], active: true,
+				behavior: Behavior({
+					onDisplayed: function(container) {
+						var daysOfWeek = myMedicines[currentMedicine]["daysOfWeek"];
+						for (var day in weekNames) {
+							if (contains(daysOfWeek, weekNames[day])) {
+								container.add(new Picture({name: weekNames[day], height: 50, url: "assets/blue_" + weekNames[day] + ".png", active: true,
+								behavior: Behavior({
+									onTouchEnded: function(container) {
+										trace(container.url.indexOf('blue') + "\n");
+										if (container.url.indexOf('blue') != -1) {
+											container.url = "assets/white_" + container.name + ".png";
+											var index = daysOfWeek.indexOf(container.name);
+											myMedicines[currentMedicine]["daysOfWeek"] = myMedicines[currentMedicine]["daysOfWeek"].splice(index, 1);
+										} else {
+											container.url = "assets/blue_" + container.name + ".png";
+											myMedicines[currentMedicine]["daysOfWeek"].push(container.name);
+										}
+									}
+								}) 
+							}));
+							} else {
+								container.add(new Picture({name: weekNames[day], height: 50, url: "assets/white_" + weekNames[day] + ".png", active: true,
+							behavior: Behavior({
+									onTouchEnded: function(container) {
+										if (container.url.indexOf('blue') != -1) {
+											container.url = "assets/white_" + container.name + ".png";
+											var index = daysOfWeek.indexOf(container.name);
+											myMedicines[currentMedicine]["daysOfWeek"] = myMedicines[currentMedicine]["daysOfWeek"].splice(index, 1);
+										} else {
+											container.url = "assets/blue_" + container.name + ".png";
+											myMedicines[currentMedicine]["daysOfWeek"].push(container.name);
+										}
+									}
+								}) }));
+							}
+						}
+					}
+				})})
 			], 
 		}),
-		new refillButton({ name: "requestRefillButton", top: 100, left: 60, right: 60, bottom: 20,
-			skin: graySkin,
-			content: new Label({ string: "REQUEST REFILL", style: whiteBodyStyle })
+		new refillButton({ name: "requestRefillButton", height: 50, top: 50, left: 60, right: 60,
+			skin: darkBlueBorderedSkin,
+			content: new Label({ string: "REQUEST REFILL", style: blueBodyStyle })
 		}),
 	],
 }));
@@ -262,6 +353,108 @@ let refillConfirmation = Layer.template($ => ({
 		}
 	}
 }));
+//Navbar
+var navbarOut = false;
+var navbarIn = false;
+
+class menuOpenBehavior extends Behavior {
+	onTouchEnded(button) {
+		navbarIn = false;
+		navbarOut = true;
+	}
+}
+
+class menuCloseBehavior extends Behavior {
+	onTouchEnded(button) {
+		navbarOut = false;
+		navbarIn = true;
+		trace("menu close triggered! \n")
+		trace(button.container.x + "\n")
+	}
+}
+
+class NavBarBehavior extends Behavior {
+	constructor(delta) {
+		super(delta);
+		this.dx = delta;
+		this.dy = delta;
+		this.width = 150;
+		this.height = 568;
+    }
+    onDisplaying(ball) {
+		ball.start();
+		ball.moveBy(-150, 0)
+    }
+    onTimeChanged(ball) {
+		if (ball.x < 555 && navbarOut) {
+			let dx = this.dx;
+			let dy = this.dy;
+			ball.moveBy(dx, 0);
+		} else {
+			navbarOut = false;
+			if (navbarIn && ball.x > 415) {
+				let dx = this.dx;
+				let dy = this.dy;
+				ball.moveBy(-dx, 0);
+			} else {
+				navbarIn = false;
+			}
+		}
+    }
+};
+
+let navbar = Layer.template($ => ({
+	top: 0, left: 0, height: 568, width: 150, name: navbar,
+	Behavior: class extends Behavior{
+		onCreate(container) {
+			container.opacity = 0;
+			container.interval = 25;
+			container.start();
+		}
+		onTimeChanged(container) {
+			if (container.opacity < 1 ) {
+				container.opacity = container.opacity + 0.05;
+			} 
+			else {
+			}
+		}
+	}, skin: mediumBlue, opacity: 0,
+	contents: [
+		new Column({
+			top: 0, left: 0, height: 568, width: 150, skin: mediumBlue,
+			behavior: new NavBarBehavior(10),
+			contents: [
+				new Picture({height: 10, url: "assets/white_arrow.png", right: 15, top: 15, active: true, behavior: new menuCloseBehavior()}),
+				new button({ name: 'nav-home', top: 25, left: 5,
+					content: 
+					new Line({contents: [
+						new Picture({width: 15, url: "assets/home_icon.png", right: 5, active: true, behavior: new menuCloseBehavior()}),
+						new Label({string: "HOME", style: navbarStyle, top: 0, left: 0})
+					]}),
+					nextScreen: homeScreen,
+				}),
+				new button({ name: 'nav-medicines', top: 5, left: 5,
+					content: new Line({contents: [
+						new Picture({width: 15, url: "assets/pill_icon.png", right: 5, active: true, behavior: new menuCloseBehavior()}),
+						new Label({string: "MY MEDICINES", style: navbarStyle, top: 0, left: 0})
+					]}),
+					nextScreen: myMedicineScreen,
+				}),
+				new button({ name: 'nav-traveling', top: 5, left: 5,
+					content: new Line({contents: [
+						new Picture({width: 15, url: "assets/traveling_icon.png", right: 5, active: true, behavior: new menuCloseBehavior()}),
+						new Label({string: "TRAVELING", style: navbarStyle, top: 0, left: 0})
+					]}),	
+					nextScreen: travelingScreen,
+				})
+				// // new Label({string: "Home", style: navbarStyle, top: 25, left: 15}),
+				// new Label({string: "My Medicine", style: navbarStyle, top: 5, left: 15}),
+				// new Label({string: "Travelling", style: navbarStyle, top: 5, left: 15})
+			]
+		})
+	]
+}));
+
 
 //Lightbox
 let lightbox = Layer.template($ => ({ 
@@ -271,6 +464,7 @@ let lightbox = Layer.template($ => ({
         $.content
     ]
 }));
+
 
 let lightboxContent = Container.template($ => ({
 	top: 0, left: 0, right: 0, bottom: 0, skin: redSkin, 
@@ -286,14 +480,37 @@ let button = Container.template($ => ({
 		$.content
 	],
 	behavior: Behavior({
-		onTouchBegan: $.onTouchBegan,
+		// onTouchBegan: $.onTouchBegan,
 		onTouchEnded: function(container) {
 			mainContainer.remove(currentScreen);
 			trace('removed current screen \n')
 			currentScreen = new $.nextScreen;
 			trace('set equal to next screen \n')
-			mainContainer.add(currentScreen);
-			trace('added screen \n')
+			mainContainer.insert(currentScreen, mainContainer.last);
+			trace('added screen \n');		
+		}
+	})
+}));
+
+let medicineButton = Container.template($ => ({
+	top: $.top, bottom: $.bottom, right: $.right, left: $.left, height: $.height,
+	skin: $.skin, active: true, 
+	contents: [
+		$.content
+	],
+	behavior: Behavior({
+
+		onTouchEnded: function(container) {
+			currentMedicine = container.first.string;
+			trace("current medicine is: " + currentMedicine + "\n");
+			mainContainer.remove(currentScreen);
+			trace('removed current screen \n')
+			currentScreen = new $.nextScreen;
+			trace('set equal to next screen \n')
+			mainContainer.insert(currentScreen, mainContainer.last);
+			trace('added screen \n');
+			
+			
 		}
 	})
 }));
@@ -332,47 +549,58 @@ let xButton = Container.template($ => ({
 		}
 	}
 }));
-
-let completedlist = new Column({
-	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
+var medicineList = {"complete": ["Vitamin A", "Vitamin C"], "incomplete": ["Sertraline", "Levofloxacin"]};
+let completedlist = Column.template($ => ({
+	top: 15, left: 0, right: 0, skin: whiteSkin,
+	Behavior: class extends Behavior{
+		onCreate(container) {
+			for (var i in medicineList["complete"]) {
+				var name = medicineList["complete"][i];
+				container.add(
+					new button({ name: name, top: 5, left: 25, 
+						skin: whiteSkin, 
+						content: 
+						new Line({contents: [
+							new Picture({height: 15, url: "assets/completed.png", right: 5}),
+							new Label({ string: name, style: blackBodyStyle}),	
+						]})
+						
+						//nextScreen: dispensingLightbox,
+					})
+				);
+			}
+		}
+	},
 	contents: [
 	new Label({ top: 25, left: 25, name: 'complete', string: 'COMPLETE', style: blueTitleStyle }),
-	new Container({ name: 'vitamin a', top: 5, left: 25, 
-		skin: whiteSkin, 
-		contents:
-		//filled-in circle icon,  
-		new Label({ string: "Vitamin A", style: blackBodyStyle}),	
-	}),
-	new Container({ name: 'vitamin c', top: 5, left: 25, 
-		skin: whiteSkin, 
-		contents:
-		//filled-in circle icon,  
-		new Label({ string: "Vitamin C", style: blackBodyStyle}),	
-	}), 
 	]
-});
+}));
 
-let incompletelist = new Column({
-	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
+let incompletelist = Column.template($ => ({
+	top: 15, left: 0, right: 0, skin: whiteSkin,
+	Behavior: class extends Behavior{
+		onCreate(container) {
+			for (var i in medicineList["incomplete"]) {
+				var name = medicineList["incomplete"][i];
+				container.add(
+					new button({ name: name, top: 5, left: 25, 
+						skin: whiteSkin, 
+						content: 
+						new Line({contents: [
+							new Picture({height: 15, url: "assets/incomplete.png", right: 5}),
+							new Label({ string: name, style: blackBodyStyle}),	
+						]})
+						
+						//nextScreen: dispensingLightbox,
+					})
+				);
+			}
+		}
+	},
 	contents: [
 	new Label({ left: 25, name: 'incomplete', top: 20, string: 'INCOMPLETE', style: blueTitleStyle }),
-
-	new button({ name: 'sertraline', top: 5, left: 25, 
-		skin: whiteSkin, 
-		content:
-		//circle icon,  
-		new Label({ string: "Sertraline", style: blackBodyStyle}),	
-		//nextScreen: dispensingLightbox,
-	}),
-
-	new Container({ name: 'levofloxacin', top: 5, left: 25, 
-		skin: whiteSkin, 
-		contents:
-		//circle icon,  
-		new Label({ string: "Levofloxacin", style: blackBodyStyle}),	
-	}),
 	]
-});
+}));
 
 /* Main Container */
 var currentScreen;
@@ -390,8 +618,9 @@ application.behavior = Behavior({
 		//hard-coded in the notification screen just for the purpose of this assignment - Stacy
 			currentScreen = new Picture({ left: 0, right: 0, height: 568, url: "assets/homescreennotification.png",
 			active: true, 
-			behavior: Behavior({ onTouchEnded(container) {currentScreen = new homeScreen(); mainContainer.add(currentScreen);}}), });
+			behavior: Behavior({ onTouchEnded(container) {currentScreen = new homeScreen(); mainContainer.insert(currentScreen, mainContainer.last);}}), });
 		mainContainer.add(currentScreen);
+		mainContainer.add(new navbar());
 	}	
 });
 
