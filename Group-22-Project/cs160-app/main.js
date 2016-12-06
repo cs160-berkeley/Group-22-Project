@@ -32,12 +32,12 @@ let MyField = Container.template($ => ({
             Behavior: FieldScrollerBehavior, clip: true, 
             contents: [
                 Label($, { 
-                    left: 0, top: 0, bottom: 0, skin: whiteSkin, 
+                    left: 0, width: 200, top: 0, bottom: 0, skin: whiteSkin, 
                     style: blackBodyStyle, anchor: 'Directions',
                     editable: true, string: $.default,
                     Behavior: class extends FieldLabelBehavior {
                         onEdited(label) {
-                        	label.container.container.skin = darkBlueBorderedSkin;
+                        	label.container.container.skin = whiteSkin;
                             let data = this.data;
                             data.name = label.string;
                             label.container.hint.visible = (data.name.length == 0);
@@ -60,25 +60,29 @@ var myMedicines = {"Sertraline": {
 		"directions": "1 100mg pill per day",
 		"quantity": 10,
 		"daysOfWeek": ["saturday"],
-		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0)]
+		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0), new Date(2006, 11, 5, 21, 0, 0, 0)],
+		"pillsTakenToday": 0
 	},
 	"Vitamin A": {
 		"directions": "1 tablet a day",
 		"quantity": 10,
 		"daysOfWeek": [],
-		"timesOfDay": []
+		"timesOfDay": [],
+		"pillsTakenToday": 0
 	},
 	"Vitamin C": {
 		"directions": "1 tablet a day",
 		"quantity": 10,
 		"daysOfWeek": [],
-		"timesOfDay": []
+		"timesOfDay": [],
+		"pillsTakenToday": 0
 	},
 	"Levofloxacin": {
 		"directions": "2 pills a day, one in the morning, one at night.",
 		"quantity": 10,
 		"daysOfWeek": [],
-		"timesOfDay": []
+		"timesOfDay": [],
+		"pillsTakenToday": 0
 	}}
 var currentMedicine = "";
 /* SKINS */
@@ -557,6 +561,7 @@ let button = Container.template($ => ({
 	})
 }));
 var stringTimes = "";
+
 function parseTimes(str) {
 	var array = stringTimes.split(/[ ,]+/);
 	myMedicines[currentMedicine]["timesOfDay"] = [];
@@ -570,6 +575,7 @@ function parseTimes(str) {
 		trace(date + "\n")
 	}
 	trace("HERE ARE THE NEW TIMES: " + myMedicines[currentMedicine]["timesOfDay"] + "\n" );
+	return myMedicines[currentMedicine]["timesOfDay"];
 }
 function makeTimeString(array) {
 	var string = "";
@@ -592,12 +598,14 @@ let saveEditButton = Container.template($ => ({
 		onTouchEnded(button) {
 			mainContainer.remove(mainContainer.last);
 			var notifications = button.previous.first.first.string;
-			trace("NOTIFICAITONS: " + notifications + "\n");
 			stringTimes = notifications;
 			var directions = button.previous.previous.previous.first.first.string;
 			var medicine = currentMedicine;
 			myMedicines[medicine]["directions"] = directions;
 			myMedicines[medicine]["timesOfDay"] = parseTimes(notifications);
+			mainContainer.remove(currentScreen);
+			currentScreen = new individualMedicineScreen();
+			mainContainer.insert(currentScreen, mainContainer.last);
 		}
 	}
 }));
@@ -639,6 +647,7 @@ let homeButton = Container.template($ => ({
 	behavior: Behavior({
 		// onTouchBegan: $.onTouchBegan,
 		onTouchEnded: function(container) {
+			// new MessageWithObject(discovery.url + "dispense", "hello").invoke();
 			var medicine = currentMedicine;
 			var box = new lightbox({
 				behavior: class extends Behavior{
@@ -671,20 +680,22 @@ let homeButton = Container.template($ => ({
 				})
 			})});
 			mainContainer.add(box);
-			var index = medicineList["incomplete"].indexOf($.medicine);
-			trace("The index is: " + index + "\n");
-			trace(medicineList["incomplete"]+ "\n") ;
-			if (index > -1) {
-			    medicineList["incomplete"].splice(index, 1);
-			    trace(medicineList["incomplete"]+ "\n") ;
+			myMedicines[$.medicine]["pillsTakenToday"] += 1;
+			trace("PILLS TAKEN: " + myMedicines[$.medicine]["pillsTakenToday"]  + " TIMES OF DAY: " + myMedicines[$.medicine]["timesOfDay"].length + "\n");
+			if (myMedicines[$.medicine]["pillsTakenToday"] == myMedicines[$.medicine]["timesOfDay"].length) {
+							var index = medicineList["incomplete"].indexOf($.medicine);
+							trace("The index is: " + index + "\n");
+							trace(medicineList["incomplete"]+ "\n") ;
+							if (index > -1) {
+							    medicineList["incomplete"].splice(index, 1);
+							    trace(medicineList["incomplete"]+ "\n") ;
+							}
+							medicineList["complete"].push(container.name);
+							currentScreen.remove(currentScreen.last);
+							currentScreen.remove(currentScreen.last);
+							currentScreen.add(new incompletelist());
+							currentScreen.add(new completedlist());
 			}
-			medicineList["complete"].push(container.name);
-			currentScreen.remove(currentScreen.last);
-			currentScreen.remove(currentScreen.last);
-			currentScreen.add(new incompletelist());
-			currentScreen.add(new completedlist());
-
-
 		}
 	})
 }));
@@ -852,7 +863,17 @@ let mainContainer = new Container({
 	contents: [],
 });
 
-
+var discovery;
+Handler.bind("/discover", Behavior({
+    onInvoke: function(handler, message) {
+        trace("found the device\n");
+        discovery = JSON.parse(message.requestText);
+        handler.invoke(new Message(discovery.url + "respond"), Message.TEXT);
+    },
+    onComplete: function(handler, message) {
+        trace("hi\n");
+    }
+}));
 
 application.add(mainContainer);
 application.behavior = Behavior({
@@ -863,6 +884,12 @@ application.behavior = Behavior({
 			behavior: Behavior({ onTouchEnded(container) {currentScreen = new homeScreen(); mainContainer.insert(currentScreen, mainContainer.last);}}), });
 		mainContainer.add(currentScreen);
 		mainContainer.add(new navbar());
-	}	
+	},
+	onDisplayed: function(application) {
+        application.discover("cs160-device.project.kinoma.marvell.com");
+    },
+    onQuit: function(application) {
+        application.forget("cs160-device.project.kinoma.marvell.com");
+    }
 });
 
