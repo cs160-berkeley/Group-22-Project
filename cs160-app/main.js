@@ -1,4 +1,4 @@
-//@program
+
 /*
  *     Copyright (C) 2010-2016 Marvell International Ltd.
  *     Copyright (C) 2002-2010 Kinoma, Inc.
@@ -16,6 +16,38 @@
  *     limitations under the License.
  */
 /* VARS */
+import {
+    FieldScrollerBehavior,
+    FieldLabelBehavior
+} from 'field';
+
+import {
+    SystemKeyboard
+} from 'keyboard';
+
+let MyField = Container.template($ => ({ 
+    width: 200, height: 30, skin: whiteSkin, top: 0, left: 20, right: 20, contents: [
+        Scroller($, { 
+            left: 4, right: 4, top: 4, bottom: 4, active: true, name: "directions",
+            Behavior: FieldScrollerBehavior, clip: true, 
+            contents: [
+                Label($, { 
+                    left: 0, top: 0, bottom: 0, skin: whiteSkin, 
+                    style: blackBodyStyle, anchor: 'Directions',
+                    editable: true, string: $.default,
+                    Behavior: class extends FieldLabelBehavior {
+                        onEdited(label) {
+                        	label.container.container.skin = darkBlueBorderedSkin;
+                            let data = this.data;
+                            data.name = label.string;
+                            label.container.hint.visible = (data.name.length == 0);
+                        }
+                    },
+                }),
+            ]
+        })
+    ]
+}));
 var monthNames = [
   "January", "February", "March",
   "April", "May", "June", "July",
@@ -54,7 +86,7 @@ let whiteSkin = new Skin({fill: 'white'});
 let graySkin = new Skin({fill: 'black'});
 let redSkin = new Skin({fill: '#E71D32'});
 let greenSkin = new Skin({fill: '#5AA700'});
-var blackBorderedSkin = new Skin({
+var blackBorderedSkin = new Skin({ fill: 'white',
     borders: {left: 2, right: 2, top: 2, bottom: 2}, 
     stroke: "black"
 });
@@ -64,6 +96,7 @@ let mediumBlue = new Skin({fill: '#4679BD'});
 let lightBlue = new Skin({fill: '#77A9DA'});
 let darkYellow = new Skin({fill: '#FDB737'});
 let lightYellow = new Skin({fill: '#FFD385'});
+let Yellow = new Skin({fill: '#FCB637'})
 var darkBlueBorderedSkin = new Skin({
     borders: {left: 2, right: 2, top: 2, bottom: 2}, 
     stroke: '#205DAB'
@@ -75,6 +108,7 @@ var boldBlackBodyStyle = new Style ({ font: 'bold 20px Avenir-Roman', color: 'bl
 var blackBodyStyle = new Style ({ font: '20px Avenir-Roman', color: 'black', horizontal: 'left'});
 var whiteHeadingStyle = new Style ({ font: '32px Avenir-Heavy', color: 'white', horizontal: 'center'});
 var whiteBodyStyle = new Style ({ font: '20px Avenir-Roman', color: 'white', horizontal: 'center'});
+var boldWhiteBodyStyle = new Style ({ font: '20px Avenir-Heavy', color: 'white', horizontal: 'center'});
 var whiteSmallStyle = new Style ({ font: '18px Avenir-Roman', color: 'white', horizontal: 'center'});
 var blueTitleStyle = new Style ({ font: 'bold 20px Avenir-Roman', color: '#205DAB', horizontal: 'left'});
 var blueBodyStyle = new Style ({ font: 'bold 18px Avenir-Roman', color: '#205DAB', horizontal: 'center'});
@@ -139,9 +173,9 @@ let myMedicineScreen = Column.template($ => ({
 			for (var medicine in myMedicines) {
 				var data = myMedicines[medicine];
 				container.insert(
-					new medicineButton({ name: medicine, top: 10, left: 25, right: 25, height: 50, 
+					new medicineButton({ name: medicine, top: 10, left: 25, right: 25, height: 45, 
 					skin: blackBorderedSkin, 
-					content: new Label({ string: medicine, style: blackBodyStyle}),	
+					content: new Label({left: 15, string: medicine, style: blackBodyStyle}),	
 					nextScreen: individualMedicineScreen,
 				}), container.last);
 			}
@@ -177,7 +211,7 @@ let numberEntryLine = Line.template($ => ({
 			behavior: Behavior({
 				onTouchEnded: function(container){
 					travelling_days += 1;
-					container.next.first.string = travelling_days; 
+					container.previous.first.string = travelling_days; 
 					},
 					
 			}),
@@ -198,8 +232,8 @@ let travelingScreen = Column.template($ => ({
 	new Text({ width: 250, top: 20, string: "You can dispense more than a day's worth of pills if you're traveling.", style: boldBlackBodyStyle }),
 	new Label({ left: 25, right: 25, top: 20, string: "HOW MANY DAYS ARE YOU TRAVELING?", style: blueBodyStyle }),
 	new numberEntryLine(),
-	new button({ name: 'dispense', height: 50, top: 35, left: 50, right: 50, 
-			skin: darkBlue, 
+	new travellingButton({ name: 'dispense', height: 50, top: 35, left: 50, right: 50, 
+			skin: darkBlue,
 			content: new Label({ string: "DISPENSE", style: whiteBodyStyle}),	
 		}),
 	],
@@ -245,13 +279,12 @@ function contains(obj, item) {
 let individualMedicineScreen = Column.template($ => ({
 	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
 	contents: [
-		//editButton not finished yet!
-		new button({ name: 'medicine-back-button', top: 5, left: 5, 
+		new button({ name: 'medicine-back-button', top: 15, left: 5, height: 15, 
 			skin: whiteSkin, 
-			content: new Picture({top: 15, height: 15, url: "assets/back_button.png"}),	
+			content: new Picture({top: 0, height: 15, url: "assets/back_button.png"}),	
 			nextScreen: myMedicineScreen,
 		}),
-		new button({ name: 'editButton', top: -15, left: 270, right: 10, width: 100, height: 25,
+		new editButton({ name: 'editButton', top: -15, left: 270, right: 10, width: 100, height: 25,
 			skin: darkBlue, 
 			content: new Label({string: "EDIT", style: whiteBodyStyle}),	
 		}),
@@ -268,8 +301,11 @@ let individualMedicineScreen = Column.template($ => ({
 			new Column({top: 0, left: 0, right: 0, skin: whiteSkin,
 				contents: [], active: true,
 				behavior: Behavior({
-					onDisplayed: function(container) {
+					onCreate: function(container) {
+						// trace("RECREATING TIMES  FOR " + currentMedicine + "\n");
+						// trace("HERE ARE THE TIMES: " + myMedicines[currentMedicine]["timesOfDay"] + "\n");
 						for (var time in myMedicines[currentMedicine]["timesOfDay"]) {
+							trace("RELOADING TIMES: " + myMedicines[currentMedicine]["timesOfDay"][time] + "\n")
 							container.add(new Label({left: 15, top: 5, string: formatTime(myMedicines[currentMedicine]["timesOfDay"][time]), style: blackBodyStyle}))
 						}
 					}
@@ -328,8 +364,37 @@ var up = true;
 //Refill Confirmation
 let refillConfirmation = Layer.template($ => ({
 	skin: greenSkin, left: 0, right: 0, height: 100, bottom: 0,
-	contents: [new Container({skin: greenSkin, left: 0, right: 0, top: 0, bottom: 0,
+	contents: [new Container({skin: Yellow, left: 0, right: 0, top: 0, bottom: 0,
 		contents: [new Label({string: "Refill Requested!", style: whiteHeadingStyle})]})],
+	Behavior: class extends Behavior{
+		onCreate(container) {
+			container.opacity = 0;
+			container.interval = 15;
+			container.start();
+		}
+		onTimeChanged(container) {
+			if ((container.opacity < 0.95 ) && up) {
+				container.opacity = container.opacity + 0.05;
+			} 
+			else {
+				up = false;
+				if (timer == 75) {
+					mainContainer.remove(mainContainer.last);
+					up = true;
+					timer = 0;
+				} else {
+					timer += 1;
+				}
+			}
+		}
+	}
+}));
+let refillError = Layer.template($ => ({
+	skin: greenSkin, left: 0, right: 0, height: 100, bottom: 0,
+	contents: [new Column({skin: mediumBlue, left: 0, right: 0, top: 0, bottom: 0,
+		contents: [
+				    new Label({top: 15, string: $.date, style: whiteHeadingStyle})]}),
+					new Label({top: 40, string: "Please contact your doctor if this is a mistake", style: whiteBodyStyle})],
 	Behavior: class extends Behavior{
 		onCreate(container) {
 			container.opacity = 0;
@@ -433,14 +498,14 @@ let navbar = Layer.template($ => ({
 					]}),
 					nextScreen: homeScreen,
 				}),
-				new button({ name: 'nav-medicines', top: 5, left: 5,
+				new button({ name: 'nav-medicines', top: 10, left: 5,
 					content: new Line({contents: [
 						new Picture({width: 15, url: "assets/pill_icon.png", right: 5, active: true, behavior: new menuCloseBehavior()}),
 						new Label({string: "MY MEDICINES", style: navbarStyle, top: 0, left: 0})
 					]}),
 					nextScreen: myMedicineScreen,
 				}),
-				new button({ name: 'nav-traveling', top: 5, left: 5,
+				new button({ name: 'nav-traveling', top: 10, left: 5,
 					content: new Line({contents: [
 						new Picture({width: 15, url: "assets/traveling_icon.png", right: 5, active: true, behavior: new menuCloseBehavior()}),
 						new Label({string: "TRAVELING", style: navbarStyle, top: 0, left: 0})
@@ -459,7 +524,7 @@ let navbar = Layer.template($ => ({
 //Lightbox
 let lightbox = Layer.template($ => ({ 
     top: $.top, height: 250, left: $.left, width: 230,
-    behavior: $.behavior, skin: graySkin, opacity: 0.5,
+    Behavior: $.behavior, skin: graySkin, opacity: 0.5,
     contents: [
         $.content
     ]
@@ -467,7 +532,7 @@ let lightbox = Layer.template($ => ({
 
 
 let lightboxContent = Container.template($ => ({
-	top: 0, left: 0, right: 0, bottom: 0, skin: redSkin, 
+	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin, 
 	contents: [
 		$.content
 	]
@@ -491,6 +556,184 @@ let button = Container.template($ => ({
 		}
 	})
 }));
+var stringTimes = "";
+function parseTimes(str) {
+	var array = stringTimes.split(/[ ,]+/);
+	myMedicines[currentMedicine]["timesOfDay"] = [];
+	for (var i in array) {
+		var time = array[i];
+		time = time.replace("AM", "");
+		time = time.replace("PM", "");
+		var date = Date.parse('Wed, 09 Aug 1995 ' + time + ':00');
+		date = new Date(date);
+		myMedicines[currentMedicine]["timesOfDay"].push(date);
+		trace(date + "\n")
+	}
+	trace("HERE ARE THE NEW TIMES: " + myMedicines[currentMedicine]["timesOfDay"] + "\n" );
+}
+function makeTimeString(array) {
+	var string = "";
+	for (var i in array) {
+		var time = array[i];
+		var minutes = time.getMinutes();
+		if (minutes < 10) {
+			minutes = "0" + minutes;
+		}
+		var time_string = " " + time.getHours() + ":" + minutes;
+		string += time_string;
+	}
+	return string;
+}
+let saveEditButton = Container.template($ => ({
+	top: 10, left: 20, right: 20, active: true, height: 40, skin: whiteSkin,
+	contents: 
+		[new Label({string: "SAVE", style: boldBlackBodyStyle})],
+	Behavior: class extends Behavior {
+		onTouchEnded(button) {
+			mainContainer.remove(mainContainer.last);
+			var notifications = button.previous.first.first.string;
+			trace("NOTIFICAITONS: " + notifications + "\n");
+			stringTimes = notifications;
+			var directions = button.previous.previous.previous.first.first.string;
+			var medicine = currentMedicine;
+			myMedicines[medicine]["directions"] = directions;
+			myMedicines[medicine]["timesOfDay"] = parseTimes(notifications);
+		}
+	}
+}));
+let editLightboxContent = Column.template($ => ({
+    top: 25, bottom: 0, left: 0, right: 0, height: 300,
+    skin: darkBlue,
+    contents: [
+    	new Label({string: currentMedicine.toUpperCase(), style: boldWhiteBodyStyle, left: 0, right: 0, top: 25}),
+    	new Label({string: "DIRECTIONS:", style: boldWhiteBodyStyle, height: 15, top: 15, left: 20}),
+    	new MyField({name: "directions", buttonName: "directions", default: $.directions}),
+    	new Label({string: "NOTIFICATION TIMES:", style: boldWhiteBodyStyle, height: 15, top: 10, left: 20}),
+    	new MyField({name: "notifications", default: $.notifications}),
+    	new saveEditButton()
+    ]
+}));
+let editButton = Container.template($ => ({
+	top: $.top, bottom: $.bottom, right: $.right, left: $.left, height: $.height,
+	skin: $.skin, active: true, 
+	contents: [
+		$.content
+	],
+	behavior: Behavior({
+		// onTouchBegan: $.onTouchBegan,
+		onTouchEnded: function(container) {
+			var medicine = currentMedicine;
+			var box = new lightbox({
+				top: 100, content: new editLightboxContent({fillColor: 'white', directions: myMedicines[medicine]["directions"], notifications: makeTimeString(myMedicines[medicine]["timesOfDay"])})});
+			mainContainer.add(box);
+		}
+	})
+}));
+
+let homeButton = Container.template($ => ({
+	top: $.top, bottom: $.bottom, right: $.right, left: $.left, height: $.height,
+	skin: $.skin, active: true, name: $.name,
+	contents: [
+		$.content
+	],
+	behavior: Behavior({
+		// onTouchBegan: $.onTouchBegan,
+		onTouchEnded: function(container) {
+			var medicine = currentMedicine;
+			var box = new lightbox({
+				behavior: class extends Behavior{
+					onCreate(container) {
+						container.opacity = 0;
+						container.interval = 15;
+						container.start();
+					}
+					onTimeChanged(container) {
+						if ((container.opacity < 0.95 ) && up) {
+							container.opacity = container.opacity + 0.05;
+						} 
+						else {
+							up = false;
+							if (timer == 75) {
+								mainContainer.remove(mainContainer.last);
+								up = true;
+								timer = 0;
+							} else {
+								timer += 1;
+							}
+						}
+					}
+				},
+				content: new lightboxContent({content: 
+				new Column({
+					contents: [
+					new Picture({url: "assets/checkmark.png", height: 100}),
+					new Text({width: 200, string: "Dispensing " + $.medicine + " from the device.", style: boldBlackBodyStyle })]
+				})
+			})});
+			mainContainer.add(box);
+			var index = medicineList["incomplete"].indexOf($.medicine);
+			trace("The index is: " + index + "\n");
+			trace(medicineList["incomplete"]+ "\n") ;
+			if (index > -1) {
+			    medicineList["incomplete"].splice(index, 1);
+			    trace(medicineList["incomplete"]+ "\n") ;
+			}
+			medicineList["complete"].push(container.name);
+			currentScreen.remove(currentScreen.last);
+			currentScreen.remove(currentScreen.last);
+			currentScreen.add(new incompletelist());
+			currentScreen.add(new completedlist());
+
+
+		}
+	})
+}));
+let travellingButton = Container.template($ => ({
+	top: $.top, bottom: $.bottom, right: $.right, left: $.left, height: $.height,
+	skin: $.skin, active: true, name: $.name,
+	contents: [
+		$.content
+	],
+	behavior: Behavior({
+		// onTouchBegan: $.onTouchBegan,
+		onTouchEnded: function(container) {
+			var medicine = currentMedicine;
+			var box = new lightbox({
+				behavior: class extends Behavior{
+					onCreate(container) {
+						container.opacity = 0;
+						container.interval = 15;
+						container.start();
+					}
+					onTimeChanged(container) {
+						if ((container.opacity < 0.95 ) && up) {
+							container.opacity = container.opacity + 0.05;
+						} 
+						else {
+							up = false;
+							if (timer == 75) {
+								mainContainer.remove(mainContainer.last);
+								up = true;
+								timer = 0;
+							} else {
+								timer += 1;
+							}
+						}
+					}
+				},
+				content: new lightboxContent({content: 
+				new Column({
+					contents: [
+					new Picture({url: "assets/checkmark.png", height: 100}),
+					new Text({width: 200, string: "Dispensing " + "4" + " worth of medicine from the device.", style: boldBlackBodyStyle })]
+				})
+			})});
+			mainContainer.add(box);
+		}
+	})
+}));
+
+//container.previous.first.first.next.first.string 
 
 let medicineButton = Container.template($ => ({
 	top: $.top, bottom: $.bottom, right: $.right, left: $.left, height: $.height,
@@ -524,16 +767,15 @@ let refillButton = Container.template($ => ({
 	behavior: Behavior({
 		onTouchEnded: function(container) {
 			if (refilled) {
-				mainContainer.add(new lightbox({content: new lightboxContent({
-					content: new Column({left: 0, right: 0, top: 0, bottom: 0,
-						contents: [
-						new xButton({style: whiteBodyStyle}),
-						new Label({string: "Oops!", style: whiteHeadingStyle, top: 50}),
-						new Text({left: 10, right: 10, string: "Looks like you can't refill at this time. Please contact your doctor if this is a mistake.", style: whiteSmallStyle})]})}),
-					top: 75, left: 50}))
+					mainContainer.add(new refillError({date: container.first.string}));
 			} else {
 				mainContainer.add(new refillConfirmation());
 				refilled = true;	
+				var tomorrow = new Date();
+				tomorrow.setDate(tomorrow.getDate() + 1);
+				container.first.string = "Your next refill is " + tomorrow.getMonth() + "/" + tomorrow.getDate();
+				container.skin = darkBlue;
+				container.first.style = whiteBodyStyle;
 			}
 		}
 	})
@@ -557,7 +799,7 @@ let completedlist = Column.template($ => ({
 			for (var i in medicineList["complete"]) {
 				var name = medicineList["complete"][i];
 				container.add(
-					new button({ name: name, top: 5, left: 25, 
+					new button({medicine: name, name: name, top: 5, left: 25, 
 						skin: whiteSkin, 
 						content: 
 						new Line({contents: [
@@ -583,7 +825,7 @@ let incompletelist = Column.template($ => ({
 			for (var i in medicineList["incomplete"]) {
 				var name = medicineList["incomplete"][i];
 				container.add(
-					new button({ name: name, top: 5, left: 25, 
+					new homeButton({medicine: name,  name: name, top: 5, left: 25, 
 						skin: whiteSkin, 
 						content: 
 						new Line({contents: [
