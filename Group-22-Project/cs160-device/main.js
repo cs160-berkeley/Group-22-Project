@@ -39,7 +39,7 @@ let popWidth = 240;
 */
 
 //COMMUNICATION TEST CODE FOR NOW
-/* SKINS */
+/* SKINS */
 let whiteSkin = new Skin({fill: 'white'});
 let graySkin = new Skin({fill: 'gray'});
 
@@ -449,14 +449,14 @@ function startup() {
 	}
 	cache = {};
 	//some add / remove test commands
-	/*
-	addMedicine("hello", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
-	addMedicine("hello2", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
-	addMedicine("hello3", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
-	addMedicine("hello4", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
-	//addMedicine("hello5", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
-	addMedicine("hello6", [1,0,1,0,1,0,1], new Date(Date.parse("December 10 2016")), new Date(Date.parse("January 17 2017")));
-	*/
+	
+	addMedicine("Sertraline", [2,2,2,2,2,2,2], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")), 10);
+	addMedicine("Vitamin A", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")), 10);
+	// addMedicine("hello3", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
+	// addMedicine("hello4", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
+	// //addMedicine("hello5", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
+	// addMedicine("hello6", [1,0,1,0,1,0,1], new Date(Date.parse("December 10 2016")), new Date(Date.parse("January 17 2017")));
+	
 	
 	headerContent = generateHeaderContent(currentDate());
 	mainContainer.add(headerContent);	

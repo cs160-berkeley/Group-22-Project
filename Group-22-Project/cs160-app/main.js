@@ -58,29 +58,15 @@ var weekNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday
 
 var myMedicines = {"Sertraline": {
 		"directions": "1 100mg pill per day",
-		"quantity": 0,
-		"daysOfWeek": ["saturday"],
+		"quantity": 10,
+		"daysOfWeek": ["sunday, monday, tuesday, wednesday, thursday, friday, saturday"],
 		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0), new Date(2006, 11, 5, 21, 0, 0, 0)],
 		"pillsTakenToday": 0
 	},
 	"Vitamin A": {
 		"directions": "1 tablet a day",
 		"quantity": 10,
-		"daysOfWeek": [],
-		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0)],
-		"pillsTakenToday": 0
-	},
-	"Vitamin C": {
-		"directions": "1 tablet a day",
-		"quantity": 10,
-		"daysOfWeek": [],
-		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0)],
-		"pillsTakenToday": 0
-	},
-	"Levofloxacin": {
-		"directions": "2 pills a day, one in the morning, one at night.",
-		"quantity": 10,
-		"daysOfWeek": [],
+		"daysOfWeek": ["sunday, monday, tuesday, wednesday, thursday, friday, saturday"],
 		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0)],
 		"pillsTakenToday": 0
 	}}
@@ -733,6 +719,35 @@ let travellingButton = Container.template($ => ({
 		// onTouchBegan: $.onTouchBegan,
 		onTouchEnded: function(container) {
 			var medicine = currentMedicine;
+			var canDispense = true;
+			var tooLittleMedicines = ""
+			for (var m in myMedicines) {
+				var data = myMedicines[m];
+				var pillsPerDay = data["timesOfDay"].length;
+				var totalPills = travelling_days * pillsPerDay;
+				if (totalPills > data["quantity"]) {
+					canDispense = false;
+					tooLittleMedicines = tooLittleMedicines + " " + m;
+				}
+			}
+			var lightbox_content;
+			if (canDispense) {
+				lightbox_content = new lightboxContent({content: 
+					new Column({
+						contents: [
+						new Picture({url: "assets/checkmark.png", height: 100}),
+						new Text({width: 200, string: "Dispensing " + travelling_days + " worth of medicine from the device.", style: boldBlackBodyStyle })]
+					})
+				});
+			} else {
+				lightbox_content = new lightboxContent({content: 
+					new Column({
+						contents: [
+						new Picture({url: "assets/error.png", height: 100}),
+						new Text({width: 200, string: "You don't have enough " + tooLittleMedicines + " for " + travelling_days + " days", style: boldBlackBodyStyle })]
+					})
+				});
+			}
 			var box = new lightbox({
 				behavior: class extends Behavior{
 					onCreate(container) {
@@ -748,11 +763,6 @@ let travellingButton = Container.template($ => ({
 							up = false;
 							if (timer == 75) {
 								mainContainer.remove(mainContainer.last);
-								// mainContainer.remove(currentScreen);
-								// currentScreen = new travelingScreen();
-								// mainContainer.insert(currentScreen, mainContainer.last);
-								travelling_days = 1;
-								currentScreen.distribute("onUpdate");
 								up = true;
 								timer = 0;
 							} else {
@@ -761,14 +771,20 @@ let travellingButton = Container.template($ => ({
 						}
 					}
 				},
-				content: new lightboxContent({content: 
-				new Column({
-					contents: [
-					new Picture({url: "assets/checkmark.png", height: 100}),
-					new Text({width: 200, string: "Dispensing " + travelling_days + " worth of medicine from the device.", style: boldBlackBodyStyle })]
-				})
-			})});
-			mainContainer.add(box);
+				content: lightbox_content});
+			if (canDispense) {
+				mainContainer.add(box);
+				for (var m in myMedicines) {
+					var data = myMedicines[m];
+					var pillsPerDay = data["timesOfDay"].length;
+					var totalPills = travelling_days * pillsPerDay;
+					data["quantity"] -= totalPills;
+				}
+			} else {
+				mainContainer.add(box);
+			}
+			travelling_days = 1;
+			currentScreen.distribute("onUpdate");
 		}
 	})
 }));
