@@ -219,7 +219,7 @@ let popContent2 = Container.template($ => ({
 		},
 		onFinished: function(container) {
 			var a = data.binding[$.name];
-			data.medicineList[a].history[$.date] = data.medicineList[a].schedule[(new Date($.date).getDay())];
+			data.medicineList[a].history[$.date] += 1 //data.medicineList[a].schedule[(new Date($.date).getDay())];
 			updateMedicineContent($.date);
 			writeData();
 			mainContainer.remove(pop);
@@ -405,6 +405,7 @@ function generateMedicineContent(date, useCache) {
 					tempList2.push(new medicationButton2({ contents: [ new Label({ string: data.medicineList[i].name, style: blackTextStyle }) ] }));
 				}
 			} else {
+				data.medicineList[i].history[date] = 0;
 				tempList.push(new medicationButton({ name: data.medicineList[i].name, date: date, contents: [ new Label({ string: data.medicineList[i].name, style: blackTextStyle }) ] }));
 			}
 		}
