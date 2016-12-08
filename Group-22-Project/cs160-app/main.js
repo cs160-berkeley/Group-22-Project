@@ -325,6 +325,24 @@ function contains(obj, item) {
     return false;
 }
 
+function updateMedicine(medicine) {
+	var data = myMedicines[medicine];
+	var daysOfWeek = data["daysOfWeek"];
+	var weekArray = [];
+	var pillsPerDay = data["timesOfDay"].length;
+	for (var day in weekNames) {
+		if (contains(daysOfWeek, weekNames[day])) {
+			weekArray.push(pillsPerDay);
+		} else {
+			weekArray.push(0);
+		}
+	} trace("Updated week array for " + medicine + " : " + weekArray + " \n");
+	let message = new MessageWithObject(discovery.url + "updateMedicine");
+	var jsonData = {"name": medicine, "schedule": weekArray};
+	message.requestText = JSON.stringify(jsonData);
+	message.invoke();
+}
+
 let individualMedicineScreen = Column.template($ => ({
 	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
 	contents: [
@@ -374,9 +392,11 @@ let individualMedicineScreen = Column.template($ => ({
 											container.url = "assets/white_" + container.name + ".png";
 											var index = daysOfWeek.indexOf(container.name);
 											myMedicines[currentMedicine]["daysOfWeek"] = myMedicines[currentMedicine]["daysOfWeek"].splice(index, 1);
+											updateMedicine(currentMedicine);
 										} else {
 											container.url = "assets/blue_" + container.name + ".png";
 											myMedicines[currentMedicine]["daysOfWeek"].push(container.name);
+											updateMedicine(currentMedicine);
 										}
 									}
 								}) 
@@ -389,9 +409,11 @@ let individualMedicineScreen = Column.template($ => ({
 											container.url = "assets/white_" + container.name + ".png";
 											var index = daysOfWeek.indexOf(container.name);
 											myMedicines[currentMedicine]["daysOfWeek"] = myMedicines[currentMedicine]["daysOfWeek"].splice(index, 1);
+											updateMedicine(currentMedicine);
 										} else {
 											container.url = "assets/blue_" + container.name + ".png";
 											myMedicines[currentMedicine]["daysOfWeek"].push(container.name);
+											updateMedicine(currentMedicine);
 										}
 									}
 								}) }));
@@ -652,6 +674,7 @@ let saveEditButton = Container.template($ => ({
 			var medicine = currentMedicine;
 			myMedicines[medicine]["directions"] = directions;
 			myMedicines[medicine]["timesOfDay"] = parseTimes(notifications);
+			updateMedicine(medicine);
 			mainContainer.remove(currentScreen);
 			currentScreen = new individualMedicineScreen();
 			mainContainer.insert(currentScreen, mainContainer.last);

@@ -336,6 +336,16 @@ function getFormattedDate(unixDate) {
 	return datestring;
 }
 
+function updateMedicine(name, schedule) {
+	var index = data.binding[name];
+	var currentInformation = data.medicineList[index];
+	if ("schedule" in currentInformation) {
+		data.medicineList[index].schedule = schedule;
+	} writeData();
+	updateMedicineContent(currentDate());
+	return true;
+}
+
 function addMedicine(mn, ms, msd, med, am, index) {
 	index = index || -1; //0-5 means rewrite index, -1 means push
 	am = am || 0; //amount of medicine, default 0
@@ -519,6 +529,21 @@ Handler.bind("/travelling", Behavior({
 		mainContainer.add(pop);
 	}
 }));
+
+Handler.bind("/updateMedicine", Behavior({
+	onInvoke: function(handler, message) {
+		var information = JSON.parse(message.requestText);
+		trace("Recieved update information: " + JSON.stringify(information) + " \n");
+		tempName = information["name"];
+		var schedule = information["schedule"];
+		updateMedicine(tempName, schedule); //schedule should be an array [1,1,1,1,1,1,1]
+		pop = new popup({contentType: popContent1, parameters: {contents: [
+			new Picture({ top: 20, height: 100, width: 100, url: "assets/checkmark.png"}),
+			new Label({ bottom: 20, string: "Successfully updated information for " + tempName, style: blackTextStyle })
+			]
+		}});
+	}
+}))
 
 /* MAIN */
 class AppBehavior extends Behavior{
