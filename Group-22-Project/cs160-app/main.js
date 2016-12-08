@@ -141,6 +141,61 @@ let homeScreen = Column.template($ => ({
 	],
 }));
 
+class addMedicineBehavior extends Behavior {
+	onTouchEnded(button) {
+		var box = new lightbox({
+				top: 100, content: new addMedicineLightboxContent({fillColor: 'white'})});
+			mainContainer.add(box);
+	}
+}
+let addMedicineLightboxContent = Column.template($ => ({
+    top: 25, bottom: 0, left: 0, right: 0, height: 300,
+    skin: darkBlue,
+    contents: [
+    	new Label({string: "Add New Medication", style: boldWhiteBodyStyle, left: 0, right: 0, top: 25}),
+    	new Label({string: "NAME:", style: boldWhiteBodyStyle, height: 15, top: 15, left: 20}),
+    	new MyField({name: "name", buttonName: "name", default: "New name here..."}),
+    	new saveNewMedicineButton(),
+    	new cancelButton()
+    ]
+}));
+let saveNewMedicineButton = Container.template($ => ({
+	top: 10, left: 20, right: 20, active: true, height: 40, skin: whiteSkin,
+	contents: 
+		[new Label({string: "SAVE", style: boldBlackBodyStyle})],
+	Behavior: class extends Behavior {
+		onTouchEnded(button) {
+			mainContainer.remove(mainContainer.last);
+			mainContainer.remove(currentScreen);
+			var newMedicine = button.previous.first.first.string;
+			var newData = {
+					"directions": "Add directions here.",
+					"quantity": 0,
+					"daysOfWeek": ["sunday, monday, tuesday, wednesday, thursday, friday, saturday"],
+					"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0)],
+					"pillsTakenToday": 0
+				};
+			myMedicines[newMedicine] = newData;
+			currentScreen = new myMedicineScreen();
+			mainContainer.insert(currentScreen, mainContainer.last);
+			var data = JSON.stringify([newMedicine, [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")), 10]);
+			trace("HERES THE DATA SENT: " + data + "\n");
+			let message = new MessageWithObject(discovery.url + "addMedicine");
+			message.requestText = data;
+			message.invoke();
+		}
+	}
+}));
+let cancelButton = Container.template($ => ({
+	top: 10, left: 20, right: 20, active: true, height: 40, skin: whiteSkin,
+	contents: 
+		[new Label({string: "CANCEL", style: boldBlackBodyStyle})],
+	Behavior: class extends Behavior {
+		onTouchEnded(button) {
+			mainContainer.remove(mainContainer.last);
+		}
+	}
+}));
 //My Medicine Screen
 let myMedicineScreen = Column.template($ => ({
 	top: 0, left: 0, right: 0, bottom: 0, skin: whiteSkin,
@@ -154,7 +209,7 @@ let myMedicineScreen = Column.template($ => ({
 	}),
 	new Picture({height: 100, top: 25, left: 0, right: 0, url: "assets/medicines.png"}),
 	new Label({ left: 25, name: 'my medicines', top: 20, string: 'MY MEDICINES', style: blueTitleStyle }),
-	new Picture({name: "addMedicine", height: 50, right: 15, top: 50, url: "assets/plus.png"}),
+	new Picture({name: "addMedicine", height: 50, right: 15, top: 50, url: "assets/plus.png", active: true, behavior: new addMedicineBehavior()}),
 	],
 	active: true,
 	Behavior: class extends Behavior{
@@ -615,6 +670,7 @@ let editLightboxContent = Column.template($ => ({
     	new saveEditButton()
     ]
 }));
+
 let editButton = Container.template($ => ({
 	top: $.top, bottom: $.bottom, right: $.right, left: $.left, height: $.height,
 	skin: $.skin, active: true, 
@@ -641,7 +697,6 @@ let homeButton = Container.template($ => ({
 	behavior: Behavior({
 		// onTouchBegan: $.onTouchBegan,
 		onTouchEnded: function(container) {
-			new MessageWithObject(discovery.url + "dispense", "hello").invoke();
 			var medicine = currentMedicine;
 			var lightbox_content;
 			if (myMedicines[$.medicine]["quantity"] == 0) {
@@ -687,19 +742,21 @@ let homeButton = Container.template($ => ({
 				content: lightbox_content});
 			mainContainer.add(box);
 			if (myMedicines[$.medicine]["quantity"] != 0) {
-				new MessageWithObject(discovery.url + "dispense", "hello").invoke();
+				let message = new MessageWithObject(discovery.url + "dispense");
+				message.requestText = $.medicine;
+				message.invoke();
 				myMedicines[$.medicine]["pillsTakenToday"] += 1;
 				myMedicines[$.medicine]["quantity"] -= 1;
 				trace("PILLS TAKEN: " + myMedicines[$.medicine]["pillsTakenToday"]  + " TIMES OF DAY: " + myMedicines[$.medicine]["timesOfDay"].length + "\n");
 				if (myMedicines[$.medicine]["pillsTakenToday"] == myMedicines[$.medicine]["timesOfDay"].length) {
-								var index = medicineList["incomplete"].indexOf($.medicine);
-								trace("The index is: " + index + "\n");
-								trace(medicineList["incomplete"]+ "\n") ;
-								if (index > -1) {
-								    medicineList["incomplete"].splice(index, 1);
-								    trace(medicineList["incomplete"]+ "\n") ;
-								}
-								medicineList["complete"].push(container.name);
+								// var index = medicineList["incomplete"].indexOf($.medicine);
+								// trace("The index is: " + index + "\n");
+								// trace(medicineList["incomplete"]+ "\n") ;
+								// if (index > -1) {
+								//     medicineList["incomplete"].splice(index, 1);
+								//     trace(medicineList["incomplete"]+ "\n") ;
+								// }
+								// medicineList["complete"].push(container.name);
 								currentScreen.remove(currentScreen.last);
 								currentScreen.remove(currentScreen.last);
 								currentScreen.add(new incompletelist());
@@ -774,6 +831,9 @@ let travellingButton = Container.template($ => ({
 				content: lightbox_content});
 			if (canDispense) {
 				mainContainer.add(box);
+				let message = new MessageWithObject(discovery.url + "travelling");
+				message.requestText = travelling_days;
+				message.invoke();
 				for (var m in myMedicines) {
 					var data = myMedicines[m];
 					var pillsPerDay = data["timesOfDay"].length;
@@ -789,7 +849,7 @@ let travellingButton = Container.template($ => ({
 	})
 }));
 
-//container.previous.first.first.next.first.string 
+
 
 let medicineButton = Container.template($ => ({
 	top: $.top, bottom: $.bottom, right: $.right, left: $.left, height: $.height,
@@ -847,11 +907,26 @@ let xButton = Container.template($ => ({
 		}
 	}
 }));
-var medicineList = {"complete": ["Vitamin A", "Vitamin C"], "incomplete": ["Sertraline", "Levofloxacin"]};
+
+function getLists() {
+	var complete = [];
+	var incomplete = [];
+	for (var medicine in myMedicines) {
+		var data = myMedicines[medicine];
+		var pillsPerDay = data["timesOfDay"].length;
+		if (data["pillsTakenToday"] == pillsPerDay) {
+			complete.push(medicine);
+		} else {
+			incomplete.push(medicine);
+		}
+	} return {"complete": complete, "incomplete": incomplete};
+}
+
 let completedlist = Column.template($ => ({
 	top: 15, left: 0, right: 0, skin: whiteSkin,
 	Behavior: class extends Behavior{
 		onCreate(container) {
+			var medicineList = getLists();
 			for (var i in medicineList["complete"]) {
 				var name = medicineList["complete"][i];
 				container.add(
@@ -878,6 +953,7 @@ let incompletelist = Column.template($ => ({
 	top: 15, left: 0, right: 0, skin: whiteSkin,
 	Behavior: class extends Behavior{
 		onCreate(container) {
+			var medicineList = getLists();
 			for (var i in medicineList["incomplete"]) {
 				var name = medicineList["incomplete"][i];
 				container.add(
@@ -888,8 +964,6 @@ let incompletelist = Column.template($ => ({
 							new Picture({height: 15, url: "assets/incomplete.png", right: 5}),
 							new Label({ string: name, style: blackBodyStyle}),	
 						]})
-						
-						//nextScreen: dispensingLightbox,
 					})
 				);
 			}

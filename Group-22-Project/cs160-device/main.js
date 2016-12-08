@@ -386,6 +386,7 @@ function generateMedicineContent(date, useCache) {
 	tempList.push(new Label({ string: "INCOMPLETE", style: blueHeaderStyle }));
 	//push incomplete medicines
 	for (var i = 0; i < data.medicineList.length; i++) {
+		trace("DEALING WITH " + data.medicineList[i].name + " NOW \n");
 		if (data.medicineList[i].schedule[tempDay] > 0 && isInRange(date, i)) {
 			if (date in data.medicineList[i].history) {
 				if (data.medicineList[i].history[date] < data.medicineList[i].schedule[tempDay]) {
@@ -440,7 +441,7 @@ function startup() {
 		trace("no config file found; creating new config file\n");
 		Files.writeJSON(uri, { binding: {}, container: [], medicineList: [] }); //creates empty config file if it does not exist
 	}
-	//clearMedicineList(); //uncomment to clear all config settings
+	clearMedicineList(); //uncomment to clear all config settings
 	data = Files.readJSON(uri);
 	if (!validConfigFile()) {
 		trace("invalid config file; creating new config file\n");
@@ -479,7 +480,8 @@ Handler.bind("/respond", Behavior({
 
 Handler.bind("/dispense", Behavior({
 	onInvoke: function(handler, message) {
-		tempName = message.requestObject;
+		tempName = message.requestText;
+		trace("Message request text is: " + message.requestText + "\n");
 		pop = new popup({ contentType: popContent2, parameters: {name: tempName, date: currentDate()} });
 		mainContainer.add(pop);
 	}
@@ -487,8 +489,34 @@ Handler.bind("/dispense", Behavior({
 
 Handler.bind("/addMedicine", Behavior({
 	onInvoke: function(handler, message) {
-		var tempArray = message.requestObject;
+		var tempArray = JSON.parse(message.requestText);
+		trace("ADDING NEW MEDICINE! \n")
+		trace("TEMPARRAY 0:" + tempArray[0] + " \n");
+		trace("TEMPARRAY 1:" + tempArray[1] + " \n");
+		trace("TEMPARRAY 2:" + tempArray[2] + " \n");
+		trace("TEMPARRAY 3:" + tempArray[3] + " \n");
 		addMedicine(tempArray[0], tempArray[1], tempArray[2], tempArray[3]); //name, schedule, start, end
+		mainContainer.remove(medicineContent);
+		medicineContent = generateMedicineContent(currentDate(), false);
+		mainContainer.add(medicineContent);
+		pop = new popup({contentType: popContent1, parameters: {contents: [
+			new Picture({ top: 20, height: 100, width: 100, url: "assets/checkmark.png"}),
+			new Text({ left: 10, right: 10, bottom: 20, string: "Successfully added new medicine, " + tempArray[0], style: blackTextStyle })
+			]
+		}});
+		mainContainer.add(pop);
+	}
+}));
+
+Handler.bind("/travelling", Behavior({
+	onInvoke: function(handler, message) {
+		//Orson please add functionality to reduce quantity of each pill by pills_per_day * num_days_travelling
+		pop = new popup({contentType: popContent1, parameters: {contents: [
+			new Picture({ top: 20, height: 100, width: 100, url: "assets/checkmark.png"}),
+			new Label({ bottom: 20, string: "Dispensing " + message.requestText + " days worth of pills.", style: blackTextStyle })
+			]
+		}});
+		mainContainer.add(pop);
 	}
 }));
 
