@@ -58,7 +58,7 @@ var weekNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday
 
 var myMedicines = {"Sertraline": {
 		"directions": "1 100mg pill per day",
-		"quantity": 10,
+		"quantity": 0,
 		"daysOfWeek": ["saturday"],
 		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0), new Date(2006, 11, 5, 21, 0, 0, 0)],
 		"pillsTakenToday": 0
@@ -67,21 +67,21 @@ var myMedicines = {"Sertraline": {
 		"directions": "1 tablet a day",
 		"quantity": 10,
 		"daysOfWeek": [],
-		"timesOfDay": [],
+		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0)],
 		"pillsTakenToday": 0
 	},
 	"Vitamin C": {
 		"directions": "1 tablet a day",
 		"quantity": 10,
 		"daysOfWeek": [],
-		"timesOfDay": [],
+		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0)],
 		"pillsTakenToday": 0
 	},
 	"Levofloxacin": {
 		"directions": "2 pills a day, one in the morning, one at night.",
 		"quantity": 10,
 		"daysOfWeek": [],
-		"timesOfDay": [],
+		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0)],
 		"pillsTakenToday": 0
 	}}
 var currentMedicine = "";
@@ -189,9 +189,14 @@ let myMedicineScreen = Column.template($ => ({
 
 //Traveling Screen
 var travelling_days = 1;
-let numberLabel = new Label({ name: "numberLabel", string: travelling_days, style: blackHeadingStyle, })
 let numberContainer = Container.template($ => ({ height: 50, top: 20, left: 0, right: 0, skin: blackBorderedSkin, 
-	contents: [ new Label({ name: "numberLabel", string: travelling_days, style: blackHeadingStyle, }) ]
+	contents: [ new Label({ name: "numberLabel", string: travelling_days, style: blackHeadingStyle, active: true,
+		behavior: Behavior({
+			onUpdate: function(container) {
+				trace("number label updated! \n");
+				container.string = travelling_days;
+			}
+		})}) ]
 }));
 let numberEntryLine = Line.template($ => ({
 	height: 50, top: 20, left: 0, right: 0, skin: whiteSkin,
@@ -246,7 +251,6 @@ let travelingScreen = Column.template($ => ({
 		onDisplayed(container) {
 			trace('~~~~ LAUNCHED! ~~~~~ \n');
 			travelling_days = 1;
-			numberLabel.string = travelling_days;
 		}
 	}
 }));
@@ -585,7 +589,11 @@ function makeTimeString(array) {
 		if (minutes < 10) {
 			minutes = "0" + minutes;
 		}
-		var time_string = " " + time.getHours() + ":" + minutes;
+		var time_string = "";
+		if (i != 0) {
+			time_string += ", "
+		}
+		time_string = time_string + time.getHours() + ":" + minutes;
 		string += time_string;
 	}
 	return string;
@@ -647,8 +655,26 @@ let homeButton = Container.template($ => ({
 	behavior: Behavior({
 		// onTouchBegan: $.onTouchBegan,
 		onTouchEnded: function(container) {
-			// new MessageWithObject(discovery.url + "dispense", "hello").invoke();
+			new MessageWithObject(discovery.url + "dispense", "hello").invoke();
 			var medicine = currentMedicine;
+			var lightbox_content;
+			if (myMedicines[$.medicine]["quantity"] == 0) {
+				lightbox_content = new lightboxContent({content: 
+				new Column({
+					contents: [
+					new Picture({url: "assets/error.png", height: 100}),
+					new Text({width: 200, string: "Unable to dispense " + $.medicine + ", there are 0 pills left.", style: boldBlackBodyStyle })]
+				})
+			});
+			} else {
+				lightbox_content = new lightboxContent({content: 
+				new Column({
+					contents: [
+					new Picture({url: "assets/checkmark.png", height: 100}),
+					new Text({width: 200, string: "Dispensing " + $.medicine + " from the device.", style: boldBlackBodyStyle })]
+				})
+			});
+			}
 			var box = new lightbox({
 				behavior: class extends Behavior{
 					onCreate(container) {
@@ -672,29 +698,27 @@ let homeButton = Container.template($ => ({
 						}
 					}
 				},
-				content: new lightboxContent({content: 
-				new Column({
-					contents: [
-					new Picture({url: "assets/checkmark.png", height: 100}),
-					new Text({width: 200, string: "Dispensing " + $.medicine + " from the device.", style: boldBlackBodyStyle })]
-				})
-			})});
+				content: lightbox_content});
 			mainContainer.add(box);
-			myMedicines[$.medicine]["pillsTakenToday"] += 1;
-			trace("PILLS TAKEN: " + myMedicines[$.medicine]["pillsTakenToday"]  + " TIMES OF DAY: " + myMedicines[$.medicine]["timesOfDay"].length + "\n");
-			if (myMedicines[$.medicine]["pillsTakenToday"] == myMedicines[$.medicine]["timesOfDay"].length) {
-							var index = medicineList["incomplete"].indexOf($.medicine);
-							trace("The index is: " + index + "\n");
-							trace(medicineList["incomplete"]+ "\n") ;
-							if (index > -1) {
-							    medicineList["incomplete"].splice(index, 1);
-							    trace(medicineList["incomplete"]+ "\n") ;
-							}
-							medicineList["complete"].push(container.name);
-							currentScreen.remove(currentScreen.last);
-							currentScreen.remove(currentScreen.last);
-							currentScreen.add(new incompletelist());
-							currentScreen.add(new completedlist());
+			if (myMedicines[$.medicine]["quantity"] != 0) {
+				new MessageWithObject(discovery.url + "dispense", "hello").invoke();
+				myMedicines[$.medicine]["pillsTakenToday"] += 1;
+				myMedicines[$.medicine]["quantity"] -= 1;
+				trace("PILLS TAKEN: " + myMedicines[$.medicine]["pillsTakenToday"]  + " TIMES OF DAY: " + myMedicines[$.medicine]["timesOfDay"].length + "\n");
+				if (myMedicines[$.medicine]["pillsTakenToday"] == myMedicines[$.medicine]["timesOfDay"].length) {
+								var index = medicineList["incomplete"].indexOf($.medicine);
+								trace("The index is: " + index + "\n");
+								trace(medicineList["incomplete"]+ "\n") ;
+								if (index > -1) {
+								    medicineList["incomplete"].splice(index, 1);
+								    trace(medicineList["incomplete"]+ "\n") ;
+								}
+								medicineList["complete"].push(container.name);
+								currentScreen.remove(currentScreen.last);
+								currentScreen.remove(currentScreen.last);
+								currentScreen.add(new incompletelist());
+								currentScreen.add(new completedlist());
+				}
 			}
 		}
 	})
@@ -724,6 +748,11 @@ let travellingButton = Container.template($ => ({
 							up = false;
 							if (timer == 75) {
 								mainContainer.remove(mainContainer.last);
+								// mainContainer.remove(currentScreen);
+								// currentScreen = new travelingScreen();
+								// mainContainer.insert(currentScreen, mainContainer.last);
+								travelling_days = 1;
+								currentScreen.distribute("onUpdate");
 								up = true;
 								timer = 0;
 							} else {
@@ -736,7 +765,7 @@ let travellingButton = Container.template($ => ({
 				new Column({
 					contents: [
 					new Picture({url: "assets/checkmark.png", height: 100}),
-					new Text({width: 200, string: "Dispensing " + "4" + " worth of medicine from the device.", style: boldBlackBodyStyle })]
+					new Text({width: 200, string: "Dispensing " + travelling_days + " worth of medicine from the device.", style: boldBlackBodyStyle })]
 				})
 			})});
 			mainContainer.add(box);
@@ -810,9 +839,9 @@ let completedlist = Column.template($ => ({
 			for (var i in medicineList["complete"]) {
 				var name = medicineList["complete"][i];
 				container.add(
-					new button({medicine: name, name: name, top: 5, left: 25, 
+					new Container({name: name, top: 5, left: 25, 
 						skin: whiteSkin, 
-						content: 
+						contents: 
 						new Line({contents: [
 							new Picture({height: 15, url: "assets/completed.png", right: 5}),
 							new Label({ string: name, style: blackBodyStyle}),	
