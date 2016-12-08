@@ -263,6 +263,7 @@ var refillList;
 var refillSelect;
 var cache;
 var tempName;
+var schedule;
 
 var lowerDateLimit;
 var upperDateLimit;
@@ -338,20 +339,23 @@ function getFormattedDate(unixDate) {
 
 function updateMedicine(name, schedule) {
 	var index = data.binding[name];
-	var currentInformation = data.medicineList[index];
-	if ("schedule" in currentInformation) {
-		data.medicineList[index].schedule = schedule;
-	} writeData();
+	trace("Updating " + name + " on device with schedule " + schedule + "\n");
+	trace("This is what data looks like rn: " + JSON.stringify(data.medicineList) + "\n");
+	data.medicineList[index].schedule = schedule;
+	writeData();
 	updateMedicineContent(currentDate());
 	return true;
 }
 
-function addMedicine(mn, ms, msd, med, am, index) {
+function addMedicine(mn, ms, msd, med, am, weight, index) {
 	index = index || -1; //0-5 means rewrite index, -1 means push
 	am = am || 0; //amount of medicine, default 0
+	trace("here's the weight: " + weight + "\n");
+	weight = weight || -1;
 	if (index > (MED_MAX-1) || index < -1) {trace("invalid index\n"); return false;}
 	if (am < 0) {trace("invalid amount\n"); return false;}
 	if (mn in data.binding) {trace("medicine already exists\n"); return false;}
+	if (weight == -1) {trace("invalid weight amount\n"); return false;}
 	if (index == -1) {
 		if (data.medicineList.length >= MED_MAX) {trace("medicine list is full\n"); return false;}
 		var c;
@@ -361,14 +365,15 @@ function addMedicine(mn, ms, msd, med, am, index) {
 				data.container[c] = mn; break;
 			}
 		}
-		index = data.medicineList.push({ name: mn, schedule: ms, start_date: msd.valueOf(), end_date: med.valueOf(), amount: am, history: {}, container: c }) - 1;
+		trace("Now adding new medicine on device: " + mn);
+		index = data.medicineList.push({ name: mn, schedule: ms, start_date: msd.valueOf(), end_date: med.valueOf(), amount: am, history: {}, container: c, weight: weight}) - 1;
 		data.binding[mn] = index;		
 	} else {
 		var tempname = data.medicineList[index].name;
 		var c = data.medicineList[index].container;
 		delete data.binding[tempname];
 		data.container[c] = mn;
-		data.medicineList[index] = { name: mn, schedule: ms, start_date: msd.valueOf(), end_date: med.valueOf(), amount: am, history: {}, container: c };
+		data.medicineList[index] = { name: mn, schedule: ms, start_date: msd.valueOf(), end_date: med.valueOf(), amount: am, history: {}, container: c, weight: weight };
 		data.binding[mn] = index;
 	}	
 	writeData();
@@ -462,8 +467,8 @@ function startup() {
 	cache = {};
 	//some add / remove test commands
 	
-	addMedicine("Sertraline", [2,2,2,2,2,2,2], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")), 10);
-	addMedicine("Vitamin A", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")), 10);
+	addMedicine("Sertraline", [2,2,2,2,2,2,2], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")), 10, 100);
+	addMedicine("Vitamin A", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")), 10, 100);
 	// addMedicine("hello3", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
 	// addMedicine("hello4", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
 	// //addMedicine("hello5", [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")));
@@ -506,7 +511,9 @@ Handler.bind("/addMedicine", Behavior({
 		trace("TEMPARRAY 1:" + tempArray[1] + " \n");
 		trace("TEMPARRAY 2:" + tempArray[2] + " \n");
 		trace("TEMPARRAY 3:" + tempArray[3] + " \n");
-		addMedicine(tempArray[0], tempArray[1], tempArray[2], tempArray[3]); //name, schedule, start, end
+		trace("TEMPARRAY 4:" + tempArray[4] + " \n");
+		trace("TEMPARRAY 4:" + tempArray[5] + " \n");
+		addMedicine(tempArray[0], tempArray[1], tempArray[2], tempArray[3], tempArray[4], tempArray[5]); //name, schedule, start, end
 		mainContainer.remove(medicineContent);
 		medicineContent = generateMedicineContent(currentDate(), false);
 		mainContainer.add(medicineContent);
@@ -536,7 +543,7 @@ Handler.bind("/updateMedicine", Behavior({
 		var information = JSON.parse(message.requestText);
 		trace("Recieved update information: " + JSON.stringify(information) + " \n");
 		tempName = information["name"];
-		var schedule = information["schedule"];
+		schedule = information["schedule"];
 		updateMedicine(tempName, schedule); //schedule should be an array [1,1,1,1,1,1,1]
 		pop = new popup({contentType: popContent1, parameters: {contents: [
 			new Picture({ top: 20, height: 100, width: 100, url: "assets/checkmark.png"}),

@@ -149,25 +149,28 @@ class addMedicineBehavior extends Behavior {
 	}
 }
 let addMedicineLightboxContent = Column.template($ => ({
-    top: 25, bottom: 0, left: 0, right: 0, height: 300,
+    top: 15, bottom: 15, left: 0, right: 0, height: 300,
     skin: darkBlue,
     contents: [
     	new Label({string: "Add New Medication", style: boldWhiteBodyStyle, left: 0, right: 0, top: 25}),
     	new Label({string: "NAME:", style: boldWhiteBodyStyle, height: 15, top: 15, left: 20}),
     	new MyField({name: "name", buttonName: "name", default: "New name here..."}),
+    	new Label({string: "MILLIGRAMS PER PILL:", style: boldWhiteBodyStyle, height: 15, top: 15, left: 20}),
+    	new MyField({name: "milligrams", buttonName: "milligrams", default: "100"}),
     	new saveNewMedicineButton(),
     	new cancelButton()
     ]
 }));
 let saveNewMedicineButton = Container.template($ => ({
-	top: 10, left: 20, right: 20, active: true, height: 40, skin: whiteSkin,
+	top: 35, left: 20, right: 20, active: true, height: 40, skin: whiteSkin,
 	contents: 
 		[new Label({string: "SAVE", style: boldBlackBodyStyle})],
 	Behavior: class extends Behavior {
 		onTouchEnded(button) {
 			mainContainer.remove(mainContainer.last);
 			mainContainer.remove(currentScreen);
-			var newMedicine = button.previous.first.first.string;
+			var newMedicine = button.previous.previous.previous.first.first.string;
+			var weight = button.previous.first.first.string;
 			var newData = {
 					"directions": "Add directions here.",
 					"quantity": 0,
@@ -178,7 +181,7 @@ let saveNewMedicineButton = Container.template($ => ({
 			myMedicines[newMedicine] = newData;
 			currentScreen = new myMedicineScreen();
 			mainContainer.insert(currentScreen, mainContainer.last);
-			var data = JSON.stringify([newMedicine, [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")), 10]);
+			var data = JSON.stringify([newMedicine, [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")), 0, parseInt(weight)]);
 			trace("HERES THE DATA SENT: " + data + "\n");
 			let message = new MessageWithObject(discovery.url + "addMedicine");
 			message.requestText = data;
@@ -594,7 +597,7 @@ let navbar = Layer.template($ => ({
 
 //Lightbox
 let lightbox = Layer.template($ => ({ 
-    top: $.top, height: 250, left: $.left, width: 230,
+    top: $.top, height: 350, left: $.left, width: 230,
     Behavior: $.behavior, skin: graySkin, opacity: 0.5,
     contents: [
         $.content
@@ -662,7 +665,7 @@ function makeTimeString(array) {
 	return string;
 }
 let saveEditButton = Container.template($ => ({
-	top: 10, left: 20, right: 20, active: true, height: 40, skin: whiteSkin,
+	top: 45, left: 20, right: 20, active: true, height: 40, skin: whiteSkin,
 	contents: 
 		[new Label({string: "SAVE", style: boldBlackBodyStyle})],
 	Behavior: class extends Behavior {
@@ -682,7 +685,7 @@ let saveEditButton = Container.template($ => ({
 	}
 }));
 let editLightboxContent = Column.template($ => ({
-    top: 25, bottom: 0, left: 0, right: 0, height: 300,
+    top: 25, bottom: 50, left: 0, right: 0, height: 300,
     skin: darkBlue,
     contents: [
     	new Label({string: currentMedicine.toUpperCase(), style: boldWhiteBodyStyle, left: 0, right: 0, top: 25}),
