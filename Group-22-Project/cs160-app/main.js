@@ -59,14 +59,14 @@ var weekNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday
 var myMedicines = {"Sertraline": {
 		"directions": "1 100mg pill per day",
 		"quantity": 10,
-		"daysOfWeek": ["sunday, monday, tuesday, wednesday, thursday, friday, saturday"],
+		"daysOfWeek": ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
 		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0), new Date(2006, 11, 5, 21, 0, 0, 0)],
 		"pillsTakenToday": 0
 	},
 	"Vitamin A": {
 		"directions": "1 tablet a day",
 		"quantity": 10,
-		"daysOfWeek": ["sunday, monday, tuesday, wednesday, thursday, friday, saturday"],
+		"daysOfWeek": ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
 		"timesOfDay": [new Date(2006, 11, 5, 10, 0, 0, 0)],
 		"pillsTakenToday": 0
 	}}
@@ -181,7 +181,7 @@ let saveNewMedicineButton = Container.template($ => ({
 			myMedicines[newMedicine] = newData;
 			currentScreen = new myMedicineScreen();
 			mainContainer.insert(currentScreen, mainContainer.last);
-			var data = JSON.stringify([newMedicine, [1,1,1,1,1,1,1], new Date(Date.parse("November 10 2016")), new Date(Date.parse("January 17 2017")), 0, parseInt(weight)]);
+			var data = JSON.stringify([newMedicine, [0,0,0,0,0,0,0], new Date(Date.parse("November 10 2016")).valueOf(), new Date(Date.parse("January 17 2017")).valueOf(), 0, parseInt(weight)]);
 			trace("HERES THE DATA SENT: " + data + "\n");
 			let message = new MessageWithObject(discovery.url + "addMedicine");
 			message.requestText = data;
@@ -334,6 +334,7 @@ function updateMedicine(medicine) {
 	var weekArray = [];
 	var pillsPerDay = data["timesOfDay"].length;
 	for (var day in weekNames) {
+		trace("Checking if " + weekNames[day] + " is in " + daysOfWeek + "\n");
 		if (contains(daysOfWeek, weekNames[day])) {
 			weekArray.push(pillsPerDay);
 		} else {
@@ -394,7 +395,7 @@ let individualMedicineScreen = Column.template($ => ({
 										if (container.url.indexOf('blue') != -1) {
 											container.url = "assets/white_" + container.name + ".png";
 											var index = daysOfWeek.indexOf(container.name);
-											myMedicines[currentMedicine]["daysOfWeek"] = myMedicines[currentMedicine]["daysOfWeek"].splice(index, 1);
+											myMedicines[currentMedicine]["daysOfWeek"].splice(index, 1);
 											updateMedicine(currentMedicine);
 										} else {
 											container.url = "assets/blue_" + container.name + ".png";
@@ -411,7 +412,7 @@ let individualMedicineScreen = Column.template($ => ({
 										if (container.url.indexOf('blue') != -1) {
 											container.url = "assets/white_" + container.name + ".png";
 											var index = daysOfWeek.indexOf(container.name);
-											myMedicines[currentMedicine]["daysOfWeek"] = myMedicines[currentMedicine]["daysOfWeek"].splice(index, 1);
+											myMedicines[currentMedicine]["daysOfWeek"].splice(index, 1);
 											updateMedicine(currentMedicine);
 										} else {
 											container.url = "assets/blue_" + container.name + ".png";
@@ -775,14 +776,6 @@ let homeButton = Container.template($ => ({
 				myMedicines[$.medicine]["quantity"] -= 1;
 				trace("PILLS TAKEN: " + myMedicines[$.medicine]["pillsTakenToday"]  + " TIMES OF DAY: " + myMedicines[$.medicine]["timesOfDay"].length + "\n");
 				if (myMedicines[$.medicine]["pillsTakenToday"] == myMedicines[$.medicine]["timesOfDay"].length) {
-								// var index = medicineList["incomplete"].indexOf($.medicine);
-								// trace("The index is: " + index + "\n");
-								// trace(medicineList["incomplete"]+ "\n") ;
-								// if (index > -1) {
-								//     medicineList["incomplete"].splice(index, 1);
-								//     trace(medicineList["incomplete"]+ "\n") ;
-								// }
-								// medicineList["complete"].push(container.name);
 								currentScreen.remove(currentScreen.last);
 								currentScreen.remove(currentScreen.last);
 								currentScreen.add(new incompletelist());

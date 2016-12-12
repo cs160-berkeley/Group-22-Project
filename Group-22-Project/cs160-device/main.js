@@ -213,16 +213,16 @@ let popContent2 = Container.template($ => ({
 	],
 	behavior: Behavior({
 		onCreate: function(container) {
-			container.duration = 3000;
+			container.duration = 2000;
 			container.start();
 			//handle medicine logic here for now, should actually be in onFinished with a method to cancel(such as clicking on shadowbox) in the future ?
 		},
 		onFinished: function(container) {
 			var a = data.binding[$.name];
 			data.medicineList[a].history[$.date] += 1 //data.medicineList[a].schedule[(new Date($.date).getDay())];
+			mainContainer.remove(pop);
 			updateMedicineContent($.date);
 			writeData();
-			mainContainer.remove(pop);
 		}
 	})
 }));
@@ -401,13 +401,17 @@ function generateMedicineContent(date, useCache) {
 	tempList.push(new Label({ string: "INCOMPLETE", style: blueHeaderStyle }));
 	//push incomplete medicines
 	for (var i = 0; i < data.medicineList.length; i++) {
-		trace("DEALING WITH " + data.medicineList[i].name + " NOW \n");
+		trace("HISTORY IS: "  + data.medicineList[i].history + "\n");
+		trace("DEALING WITH " + data.medicineList[i].name + " NOW , IT'S DATE IS: " + data.medicineList[i].history[date] + "\n");
 		if (data.medicineList[i].schedule[tempDay] > 0 && isInRange(date, i)) {
 			if (date in data.medicineList[i].history) {
 				if (data.medicineList[i].history[date] < data.medicineList[i].schedule[tempDay]) {
-					tempList.push(new medicationButton({ name: data.medicineList[i].name, date: date, contents: [ new Label({ string: data.medicineList[i].name, style: blackTextStyle }) ] }));
+						tempList.push(new medicationButton({ name: data.medicineList[i].name, date: date, contents: [ new Label({ string: data.medicineList[i].name, style: blackTextStyle }) ] }));
+				} else if (data.medicineList[i].history[date] == undefined){
+				  	data.medicineList[i].history[date] = 0;
+				  	tempList.push(new medicationButton({ name: data.medicineList[i].name, date: date, contents: [ new Label({ string: data.medicineList[i].name, style: blackTextStyle }) ] }));
 				} else {
-					tempList2.push(new medicationButton2({ contents: [ new Label({ string: data.medicineList[i].name, style: blackTextStyle }) ] }));
+				  	tempList2.push(new medicationButton2({ contents: [ new Label({ string: data.medicineList[i].name, style: blackTextStyle }) ] }));
 				}
 			} else {
 				data.medicineList[i].history[date] = 0;
@@ -508,15 +512,12 @@ Handler.bind("/addMedicine", Behavior({
 		var tempArray = JSON.parse(message.requestText);
 		trace("ADDING NEW MEDICINE! \n")
 		trace("TEMPARRAY 0:" + tempArray[0] + " \n");
-		trace("TEMPARRAY 1:" + tempArray[1] + " \n");
-		trace("TEMPARRAY 2:" + tempArray[2] + " \n");
-		trace("TEMPARRAY 3:" + tempArray[3] + " \n");
-		trace("TEMPARRAY 4:" + tempArray[4] + " \n");
-		trace("TEMPARRAY 4:" + tempArray[5] + " \n");
-		addMedicine(tempArray[0], tempArray[1], tempArray[2], tempArray[3], tempArray[4], tempArray[5]); //name, schedule, start, end
-		mainContainer.remove(medicineContent);
-		medicineContent = generateMedicineContent(currentDate(), false);
-		mainContainer.add(medicineContent);
+		trace("TEMPARRAY 1:" + typeof tempArray[1] + " \n");
+		trace("TEMPARRAY 2:" + typeof tempArray[2] + " \n");
+		trace("TEMPARRAY 3:" + typeof tempArray[3] + " \n");
+		trace("TEMPARRAY 4:" + typeof tempArray[4] + " \n");
+		trace("TEMPARRAY 5:" + typeof tempArray[5] + " \n");
+		addMedicine(tempArray[0], tempArray[1], new Date(parseInt(tempArray[2])), new Date(parseInt(tempArray[3])), tempArray[4], tempArray[5]); //name, schedule, start, end
 		pop = new popup({contentType: popContent1, parameters: {contents: [
 			new Picture({ top: 20, height: 100, width: 100, url: "assets/checkmark.png"}),
 			new Text({ left: 10, right: 10, bottom: 20, string: "Successfully added new medicine, " + tempArray[0], style: blackTextStyle })
@@ -529,6 +530,10 @@ Handler.bind("/addMedicine", Behavior({
 Handler.bind("/travelling", Behavior({
 	onInvoke: function(handler, message) {
 		//Orson please add functionality to reduce quantity of each pill by pills_per_day * num_days_travelling
+		var num_days = parseInt(message.requestText);
+		for (var i = 0; i < data.medicineList.length; i++) {
+			data.medicineList[i].amount -= data.medicineList[i].schedule[(new Date(currentDate())).getDay()] * num_days;
+		}
 		pop = new popup({contentType: popContent1, parameters: {contents: [
 			new Picture({ top: 20, height: 100, width: 100, url: "assets/checkmark.png"}),
 			new Label({ bottom: 20, string: "Dispensing " + message.requestText + " days worth of pills.", style: blackTextStyle })
