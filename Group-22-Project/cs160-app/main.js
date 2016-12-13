@@ -1012,6 +1012,12 @@ Handler.bind("/discover", Behavior({
         trace("hi\n");
     }
 }));
+Handler.bind("/updateCount", Behavior({
+	onInvoke: function(handler, message) {
+        var text = JSON.parse(message.requestText);
+       	trace("Recieved new update on pills: " + text["num_pills"] + "\n");
+    }
+}));
 
 application.add(mainContainer);
 application.behavior = Behavior({

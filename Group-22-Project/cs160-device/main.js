@@ -1,4 +1,5 @@
 /* DEF */
+let Pins = require("pins");
 let MED_MAX = 6;
 let PILL_MAX = 100;
 let monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -85,6 +86,7 @@ let refillContentButton = Line.template($ => ({
 	behavior: Behavior({	
 		onTouchEnded: function(container) {
 			refillSelect = $.name;
+			trace("You want to refill " + refillSelect + "\n");
 			container.container.container.last.active = true; //set next button to Active
 			container.container.container.last.skin = blue1Skin;
 			container.first.url = "assets/Checkedbutton.png";
@@ -103,6 +105,29 @@ let refillContentButton2 = Container.template($ => ({
 			//trace("" + refillSelect +"\n");
 			pop.remove(pop.first.next);
 			pop.add(new $.nextScreen($.parameters));
+		}
+	})
+}));
+let refillContentButton3 = Container.template($ => ({
+	width: 120, height: 32, bottom: 6, skin: $.skin, active: $.active,
+	contents: [ new Label({ string: $.string, style: whiteHeaderStyle }) ],
+	behavior: Behavior({	
+		onTouchEnded: function(container) {
+			//trace("" + refillSelect +"\n");
+			pop.remove(pop.first.next);
+			
+			Pins.invoke("/weightSensor/read", value => {
+			   var milligrams = 10.0 * value * 1000;
+			   var weight = data.medicineList[data.binding[refillSelect]].weight;
+			   num_pills = Math.floor(milligrams / weight);
+			   trace("You added this many pills: " + num_pills + "\n");
+			   data.medicineList[data.binding[refillSelect]].amount += num_pills;
+			   pop.add(new $.nextScreen({"num_pills": num_pills}));
+			   // var message = new Message(discovery.url+"updateCount");
+			   // trace("invoking message now \n");
+			   // message.requestText = JSON.stringify({"num_pills": data.medicineList[data.binding[refillSelect]].amount});
+			   // message.invoke();
+			});
 		}
 	})
 }));
@@ -128,7 +153,7 @@ let refillButton = Container.template($ => ({
 			refillContent.push(new Column({ top: 26, left: 64, skin: whiteSkin, contents: refillList }));
 			
 			refillContent.push(new refillContentButton2({ string: "NEXT", nextScreen: popContent11, skin: graySkin, active: false, parameters: {}}));
-			pop = new popup({ contentType: popContent1, parameters: {contents: refillContent} });
+			pop = new popup({ contentType: permanentPop, parameters: {contents: refillContent} });
 			mainContainer.add(pop);
 		}
 	})
@@ -177,9 +202,24 @@ let shadowBox = Layer.template($ => ({
 	})
 }));
 
-let popContent1 = Container.template($ => ({
+let permanentPop = Container.template($ => ({
 	height: popHeight, width: popWidth, skin: whiteSkin, active: true,
 	contents: $.contents
+}));
+
+let popContent1 = Container.template($ => ({
+	height: popHeight, width: popWidth, skin: whiteSkin, active: true,
+	contents: $.contents, 
+	behavior: Behavior({
+		onCreate: function(container) {
+			container.duration = 1200;
+			container.start();
+			//handle medicine logic here for now, should actually be in onFinished with a method to cancel(such as clicking on shadowbox) in the future ?
+		},
+		onFinished: function(container) {
+			mainContainer.remove(pop);
+		}
+	})
 }));
 
 let popContent11 = Container.template($ => ({
@@ -187,22 +227,23 @@ let popContent11 = Container.template($ => ({
 	contents: [
 		new Label({ top: 6, string: "Open top of device and refill:", style: blackHeaderStyle }),
 		new Label({ top: 64, string: "Compartment #" + data.medicineList[data.binding[refillSelect]].container, style: blueBIGStyle }),
-		new refillContentButton2({ string: "DONE", nextScreen: popContent111, skin: blue1Skin, active: true, parameters: {} })
+		new refillContentButton3({ string: "DONE", nextScreen: popContent111, skin: blue1Skin, active: true, parameters: {} })
 	]
 }));
 
 let popContent111 = Container.template($ => ({
 	height: popHeight, width: popWidth, skin: whiteSkin, active: true,
 	contents: [ 
-		new Picture({ top: 20, height: 100, width: 100, url: "assets/checkmark.png"}),
-		new Label({ bottom: 16, string: "Success!", style: yellowBIGStyle })
+		new Picture({ top: 18, height: 100, width: 100, url: "assets/checkmark.png"}),
+		new Label({ bottom: 31, string: "Success!", style: yellowBIGStyle }),
+		new Label({ bottom: 16, string: "Added " + $.num_pills + " pills of " + refillSelect, style: blackTextStyle })
 	],
 	behavior: Behavior({
 		onCreate: function(application) {	
-			data.medicineList[data.binding[refillSelect]].amount = PILL_MAX; //just set to pillmax for now
+			// data.medicineList[data.binding[refillSelect]].amount = PILL_MAX; //just set to pillmax for now
 		}
 	})
-}));
+})); 
 
 let popContent2 = Container.template($ => ({
 	height: popHeight, width: popWidth, skin: whiteSkin,
@@ -264,6 +305,7 @@ var refillSelect;
 var cache;
 var tempName;
 var schedule;
+var num_pills;
 
 var lowerDateLimit;
 var upperDateLimit;
@@ -340,9 +382,9 @@ function getFormattedDate(unixDate) {
 function updateMedicine(name, schedule) {
 	var index = data.binding[name];
 	trace("Updating " + name + " on device with schedule " + schedule + "\n");
-	trace("This is what data looks like rn: " + JSON.stringify(data.medicineList) + "\n");
 	data.medicineList[index].schedule = schedule;
 	writeData();
+	trace("This is what data looks like rn: " + JSON.stringify(data.medicineList) + "\n");
 	updateMedicineContent(currentDate());
 	return true;
 }
@@ -552,20 +594,54 @@ Handler.bind("/updateMedicine", Behavior({
 		updateMedicine(tempName, schedule); //schedule should be an array [1,1,1,1,1,1,1]
 		pop = new popup({contentType: popContent1, parameters: {contents: [
 			new Picture({ top: 20, height: 100, width: 100, url: "assets/checkmark.png"}),
-			new Label({ bottom: 20, string: "Successfully updated information for " + tempName, style: blackTextStyle })
+			new Text({ bottom: 20, left: 10, right: 10, string: "Successfully updated information for " + tempName, style: blackTextStyle })
 			]
 		}});
+		mainContainer.add(pop);
 	}
 }))
-
+var discovery;
+Handler.bind("/discover", Behavior({
+    onInvoke: function(handler, message) {
+        trace("found the device\n");
+        discovery = JSON.parse(message.requestText);
+        trace("DISCOVERY ON DEVICE: " + discovery.url + "\n");
+    },
+    onComplete: function(handler, message) {
+        trace("hi\n");
+    }
+}));
 /* MAIN */
 class AppBehavior extends Behavior{
 	onLaunch(application) {
 		application.shared = true;
+		application.discover("cs160-app.project.kinoma.marvell.com");
 		loadingComplete = false;
 		application.add(loadingScreen); //load loading screen
 		startup(); //run startup functions
 		//application.add(mainContainer);
+		Pins.configure({
+			 weightSensor: {
+		        require: "Analog", //"Analog" if using the built-in BLL
+		        pins: {
+		             analog: { pin: 54 }
+		        }
+		      },
+			button: {pin: 62, type: "Digital", direction: "output"}
+			}, success => this.onPinsConfigured(application, success));
+	}
+	onPinsConfigured(label, success) {		
+		if (success) {
+			trace("Successfully changed \n");
+		}
+		else {
+			trace("failed to configure pins\n");
+		}
+	}
+	onProximityChanged(label, value) {
+		//Convert from percentage to percentage out of 10 grams
+		var grams = 10.0 * value;
+		trace("Value changed to grams: " + grams + "\n");
 	}
 	onQuit(application) {
 		application.shared = false;
